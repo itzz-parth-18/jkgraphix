@@ -7,6 +7,6 @@ export default defineConfig({
     seed: "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
   },
   datasource: {
-    url: process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:51214/template1?sslmode=disable&connection_limit=10&connect_timeout=0&max_idle_connection_lifetime=0&pool_timeout=0&socket_timeout=0",
+    url: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_uwEQ9CRP3YWx@ep-proud-night-az4rakbu-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
   },
 });
