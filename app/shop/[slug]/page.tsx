@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import { UploadButton } from "@uploadthing/react";
 import CustomizationEngine, { CustomField } from "@/components/CustomizationEngine";
 import CartDrawer, { CartItem } from "@/components/CartDrawer";
-import { ShoppingBag, Sparkles, Truck, ShieldCheck } from "lucide-react";
+import { ShoppingBag, Sparkles, Truck, ShieldCheck, CheckCircle2, Trash2 } from "lucide-react";
+import { OurFileRouter } from "@/app/api/uploadthing/core";
 
 const mockProduct = {
   id: "prod_01",
@@ -37,13 +39,6 @@ const mockProduct = {
       isRequired: false,
       placeholder: "Write a special message to include inside...",
       maxLength: 200,
-    },
-    {
-      id: "photo_upload",
-      label: "Cover Photo Insert",
-      fieldType: "IMAGE_UPLOAD",
-      isRequired: true,
-      helpText: "High resolution photo recommended for optimal print clarity.",
     },
   ] as CustomField[],
 };
@@ -114,8 +109,64 @@ export default function ProductDetailPage() {
 
           <CustomizationEngine
             fields={mockProduct.customFields}
-            onChange={(data) => setCustomizationData(data)}
+            onChange={(data) => setCustomizationData((prev) => ({ ...prev, ...data }))}
           />
+
+          {/* Uploadthing Integration Box */}
+          <div className="space-y-2 pt-2 border-t border-taupe-border/60">
+            <label className="block text-sm font-medium text-espresso">
+              Upload High-Resolution Photo (Cloud)
+            </label>
+            <div className="border border-dashed border-taupe-border rounded-xl p-4 bg-white flex flex-col items-center justify-center">
+              {customizationData.photo_upload ? (
+                <div className="w-full flex items-center justify-between gap-3 bg-cream/50 p-2.5 rounded-xl border border-taupe-border">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <img
+                      src={customizationData.photo_upload}
+                      alt="Uploaded customer photo"
+                      className="w-14 h-14 object-cover rounded-lg border border-taupe-border flex-shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Photo Attached
+                      </p>
+                      <p className="text-[10px] text-taupe truncate mt-0.5 max-w-[180px]">
+                        {customizationData.photo_upload}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCustomizationData((prev) => ({ ...prev, photo_upload: undefined }))}
+                    className="flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition flex-shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="w-full py-2 flex flex-col items-center">
+                  <UploadButton<OurFileRouter, "customerPhotoUploader">
+                    endpoint="customerPhotoUploader"
+                    onClientUploadComplete={(res: any) => {
+                      if (res && res[0]) {
+                        const url = res[0].url;
+                        if (url) {
+                          setCustomizationData((prev) => ({
+                            ...prev,
+                            photo_upload: url,
+                          }));
+                        }
+                      }
+                    }}
+                    onUploadError={(error: Error) => {
+                      alert(`ERROR! ${error.message}`);
+                    }}
+                  />
+                  <span className="text-[11px] text-taupe mt-1">Supports PNG, JPG up to 4MB</span>
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="space-y-4 pt-2">
             <div className="flex items-center gap-4">

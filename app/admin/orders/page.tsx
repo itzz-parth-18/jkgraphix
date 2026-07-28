@@ -1,212 +1,161 @@
 "use client";
 
-import React, { useState } from "react";
-import { Download, Package, Clock, Search } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Package, Clock, CheckCircle2, Truck, ExternalLink, RefreshCw } from "lucide-react";
 
-// Mock Orders Data
-const initialOrders = [
-  {
-    id: "ORD-8921",
-    customerName: "Ananya Sharma",
-    customerEmail: "ananya@example.com",
-    productName: "Handcrafted Custom Memory Box",
-    basePrice: 48.0,
-    quantity: 1,
-    status: "PENDING",
-    createdAt: "2026-07-28 10:15 AM",
-    customizations: {
-      engraving_names: "Ananya & Rohan",
-      anniversary_date: "2022-11-14",
-      card_message: "Happy 4th Anniversary my love! Here's to forever.",
-      photo_upload: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1000&auto=format&fit=crop",
-    },
-  },
-  {
-    id: "ORD-8920",
-    customerName: "Vikram Mehta",
-    customerEmail: "vikram.m@example.com",
-    productName: "Handcrafted Custom Memory Box",
-    basePrice: 48.0,
-    quantity: 2,
-    status: "IN_PRODUCTION",
-    createdAt: "2026-07-27 04:30 PM",
-    customizations: {
-      engraving_names: "Vikram & Sneha",
-      anniversary_date: "2025-02-14",
-      card_message: "Together is our favorite place to be.",
-      photo_upload: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1000&auto=format&fit=crop",
-    },
-  },
-];
+interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  customizations: any;
+}
+
+interface Order {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  totalAmount: number;
+  status: "PENDING" | "IN_PRODUCTION" | "SHIPPED";
+  createdAt: string;
+  items: OrderItem[];
+}
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState(initialOrders);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleStatusChange = (orderId: string, newStatus: string) => {
-    setOrders((prev) =>
-      prev.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus } : ord))
-    );
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/orders");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setOrders(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch orders", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredOrders = orders.filter((order) =>
-    order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, status: newStatus }),
+      });
+
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus as any } : ord))
+        );
+      } else {
+        alert("Failed to update status");
+      }
+    } catch (err) {
+      console.error("Error updating status", err);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-cream p-6 lg:p-10 space-y-8">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-taupe-border/60 pb-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-rose">
-            Workshop Management
-          </span>
-          <h1 className="text-3xl font-serif text-espresso font-semibold mt-1">
-            Customization Orders
-          </h1>
-          <p className="text-xs text-taupe mt-1">
-            Review customer text specs, download uploaded media, and manage production workflow.
-          </p>
+          <h1 className="text-3xl font-serif font-semibold text-espresso">Workshop Admin Dashboard</h1>
+          <p className="text-sm text-taupe mt-1">Manage incoming personalized orders and customer high-res photos.</p>
         </div>
-
-        {/* Quick Stats */}
-        <div className="flex gap-3">
-          <div className="bg-white border border-taupe-border rounded-xl px-4 py-2.5 flex items-center gap-3 shadow-sm">
-            <Clock className="w-5 h-5 text-rose" />
-            <div>
-              <p className="text-[10px] uppercase font-bold text-taupe">Pending</p>
-              <p className="text-sm font-semibold text-espresso">
-                {orders.filter((o) => o.status === "PENDING").length} Orders
-              </p>
-            </div>
-          </div>
-          <div className="bg-white border border-taupe-border rounded-xl px-4 py-2.5 flex items-center gap-3 shadow-sm">
-            <Package className="w-5 h-5 text-sage" />
-            <div>
-              <p className="text-[10px] uppercase font-bold text-taupe">In Workshop</p>
-              <p className="text-sm font-semibold text-espresso">
-                {orders.filter((o) => o.status === "IN_PRODUCTION").length} Orders
-              </p>
-            </div>
-          </div>
-        </div>
+        <button
+          onClick={fetchOrders}
+          className="flex items-center gap-2 bg-white border border-taupe-border px-4 py-2 rounded-xl text-sm font-medium text-espresso hover:bg-cream-dark transition"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh Orders
+        </button>
       </div>
 
-      {/* Filter Bar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-taupe absolute left-3.5 top-3.5" />
-          <input
-            type="text"
-            placeholder="Search order ID or customer name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-taupe-border rounded-xl text-xs text-espresso focus:outline-none focus:ring-2 focus:ring-rose/40"
-          />
+      {loading ? (
+        <div className="text-center py-20 text-taupe">Loading live orders from database...</div>
+      ) : orders.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-2xl border border-taupe-border">
+          <Package className="w-12 h-12 text-taupe mx-auto mb-3" />
+          <h3 className="text-lg font-medium text-espresso">No orders found</h3>
+          <p className="text-sm text-taupe mt-1">New customer checkouts will appear here instantly.</p>
         </div>
-      </div>
-
-      {/* Orders List */}
-      <div className="space-y-6">
-        {filteredOrders.map((order) => (
-          <div
-            key={order.id}
-            className="bg-white border border-taupe-border rounded-2xl p-6 shadow-sm space-y-6"
-          >
-            {/* Header / Meta */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-taupe-border/40 pb-4">
-              <div>
-                <div className="flex items-center gap-3">
-                  <span className="font-serif font-semibold text-base text-espresso">
-                    {order.id}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                      order.status === "PENDING"
-                        ? "bg-amber-100 text-amber-800"
-                        : order.status === "IN_PRODUCTION"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-emerald-100 text-emerald-800"
-                    }`}
-                  >
-                    {order.status.replace("_", " ")}
-                  </span>
+      ) : (
+        <div className="space-y-6">
+          {orders.map((order) => (
+            <div key={order.id} className="bg-white border border-taupe-border rounded-2xl p-6 shadow-soft space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-taupe-border/50 pb-4">
+                <div>
+                  <span className="text-xs font-mono text-taupe">Order ID: {order.id}</span>
+                  <h3 className="text-lg font-serif font-semibold text-espresso">{order.customerName}</h3>
+                  <p className="text-xs text-taupe">{order.customerEmail} • {new Date(order.createdAt).toLocaleDateString()}</p>
                 </div>
-                <p className="text-xs text-taupe mt-1">
-                  Customer: <strong className="text-espresso">{order.customerName}</strong> ({order.customerEmail}) • {order.createdAt}
-                </p>
-              </div>
 
-              {/* Status Selector */}
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-taupe font-medium">Status:</label>
-                <select
-                  value={order.status}
-                  onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                  className="bg-cream-dark border border-taupe-border text-xs text-espresso rounded-lg px-3 py-1.5 focus:outline-none"
-                >
-                  <option value="PENDING">PENDING</option>
-                  <option value="IN_PRODUCTION">IN PRODUCTION</option>
-                  <option value="SHIPPED">SHIPPED</option>
-                  <option value="DELIVERED">DELIVERED</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Customization Details Block */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-cream-dark/40 rounded-xl p-4 border border-taupe-border/40">
-              
-              {/* Text Engravings & Specs */}
-              <div className="lg:col-span-8 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-espresso flex items-center gap-1.5">
-                  <Package className="w-4 h-4 text-rose" /> Production Specs
-                </h4>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="bg-white p-3 rounded-lg border border-taupe-border/40">
-                    <span className="text-taupe block text-[10px] font-bold uppercase">Names to Engrave</span>
-                    <span className="font-semibold text-espresso">{order.customizations.engraving_names}</span>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <span className="text-xs text-taupe block">Total Amount</span>
+                    <span className="text-lg font-serif font-bold text-espresso">${Number(order.totalAmount).toFixed(2)}</span>
                   </div>
 
-                  <div className="bg-white p-3 rounded-lg border border-taupe-border/40">
-                    <span className="text-taupe block text-[10px] font-bold uppercase">Anniversary / Date</span>
-                    <span className="font-semibold text-espresso">{order.customizations.anniversary_date}</span>
-                  </div>
-                </div>
-
-                <div className="bg-white p-3 rounded-lg border border-taupe-border/40 text-xs">
-                  <span className="text-taupe block text-[10px] font-bold uppercase">Card Note Message</span>
-                  <p className="text-espresso italic mt-0.5">"{order.customizations.card_message}"</p>
-                </div>
-              </div>
-
-              {/* Uploaded Customer Media */}
-              <div className="lg:col-span-4 space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-espresso flex items-center gap-1.5">
-                  Uploaded Customer Photo
-                </h4>
-                <div className="relative group rounded-xl overflow-hidden border border-taupe-border aspect-video bg-white">
-                  <img
-                    src={order.customizations.photo_upload}
-                    alt="Customer Upload"
-                    className="w-full h-full object-cover"
-                  />
-                  <a
-                    href={order.customizations.photo_upload}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="absolute inset-0 bg-espresso/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-cream text-xs font-medium gap-1.5"
+                  <select
+                    value={order.status}
+                    onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                    className="text-xs font-medium px-3 py-2 rounded-xl border border-taupe-border bg-cream text-espresso focus:outline-none"
                   >
-                    <Download className="w-4 h-4" /> Download High-Res
-                  </a>
+                    <option value="PENDING">Pending</option>
+                    <option value="IN_PRODUCTION">In Production</option>
+                    <option value="SHIPPED">Shipped</option>
+                  </select>
                 </div>
               </div>
 
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-taupe">Customized Items & Photos</h4>
+                {order.items.map((item) => {
+                  const photoUrl = item.customizations?.photo_upload || item.customizations?.photo;
+                  return (
+                    <div key={item.id} className="flex flex-wrap items-center justify-between gap-4 bg-cream-dark/40 p-4 rounded-xl border border-taupe-border/40">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-espresso">{item.name} (x{item.quantity})</p>
+                        <div className="text-xs text-taupe space-y-0.5">
+                          {Object.entries(item.customizations || {}).map(([key, val]: [string, any]) => (
+                            key !== "photo_upload" && key !== "photo" && (
+                              <p key={key}><span className="font-medium">{key}:</span> {String(val)}</p>
+                            )
+                          ))}
+                        </div>
+                      </div>
+
+                      {photoUrl ? (
+                        <div className="flex items-center gap-3">
+                          <img src={photoUrl} alt="Customer Custom Upload" className="w-16 h-16 rounded-lg object-cover border border-taupe-border" />
+                          <a
+                            href={photoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1.5 text-xs font-medium text-rose hover:underline bg-white px-3 py-2 rounded-lg border border-taupe-border"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" /> High-Res Download
+                          </a>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-taupe italic">No photo uploaded</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
