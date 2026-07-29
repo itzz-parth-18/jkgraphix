@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Sparkles, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
-AboutPage() {
+export default function AboutPage() {
   return (
     <div className="min-h-screen bg-[#F9F6F2] text-[#2C2320] flex flex-col">
       <nav className="sticky top-0 z-40 bg-[#F9F6F2]/90 backdrop-blur-md border-b border-[#EFE8E2] px-6 py-4">
