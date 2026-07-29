@@ -25,7 +25,7 @@ export default function HomePage() {
           <Link href="/" className="font-serif text-xl font-bold tracking-tight text-[#1F1816] flex items-center gap-3">
             {/* JK Graphix Logo Integration (36-40px high, properly aligned) */}
             <img 
-              src="/images/logo.png" 
+              src="/images/logo.jpeg" 
               alt="JK Graphix Logo" 
               className="h-9 w-9 object-contain rounded-md bg-[#1F1816] p-1"
               onError={(e) => {
@@ -247,9 +247,9 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <Link href="/" className="font-serif text-xl font-bold flex items-center gap-2 mb-4 text-white">
-              <img src="/images/logo.png" alt="JK Graphix Logo" className="h-7 w-7 object-contain rounded bg-white p-0.5" /> JK Graphix
+              <img src="/images/logo.jpeg" alt="JK Graphix Logo" className="h-7 w-7 object-contain rounded bg-white p-0.5" /> JK Graphix
             </Link>
-            <p className="text-sm text-[#F9F6F2]/70 max-w-sm">Crafting Memories, One Gift at a Time. Premium personalized keepsakes, designed to tell your unique story.</p>
+            <p className="text-sm text-[#F9F6F2]/70 max-w-sm">Custom Perfection, Tailored To Your Vision. Premium personalized keepsakes, designed to tell your unique story.</p>
           </div>
           <div>
             <h4 className="font-serif font-semibold mb-4 text-[#C89A84]">Quick Links</h4>
