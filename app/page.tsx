@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 export default function HomePage() {
-  // Custom Instagram Icon SVG to avoid lucide-react version errors
+  // Custom Instagram Icon SVG
   const InstagramIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
@@ -23,7 +23,7 @@ export default function HomePage() {
       <nav className="sticky top-0 z-40 bg-cream/80 backdrop-blur-md border-b border-taupe-border/60 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="font-serif text-xl font-bold tracking-tight text-espresso flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-rose" /> Lumière Crafts
+            <Sparkles className="w-5 h-5 text-rose" /> JK Graphix
           </Link>
           
           <div className="flex items-center gap-6">
@@ -156,7 +156,7 @@ export default function HomePage() {
         {/* 6. Why Choose Us */}
         <section className="py-16 bg-white border-y border-taupe-border/50 px-6">
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-serif font-bold text-espresso">Why Choose Lumière Crafts</h2>
+            <h2 className="text-2xl font-serif font-bold text-espresso">Why Choose JK Graphix</h2>
           </div>
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
             <div className="flex items-center gap-4 justify-center md:justify-start">
@@ -216,7 +216,7 @@ export default function HomePage() {
             <div className="text-center mb-12 flex flex-col items-center">
               <InstagramIcon className="w-8 h-8 text-rose mb-4" />
               <h2 className="text-3xl font-serif font-bold text-espresso">Follow Our Workshop</h2>
-              <p className="text-taupe mt-3 text-sm">@lumierecrafts</p>
+              <p className="text-taupe mt-3 text-sm">@jkgraphix</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((item) => (
@@ -237,7 +237,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <Link href="/" className="font-serif text-xl font-bold flex items-center gap-2 mb-4">
-              <Sparkles className="w-5 h-5 text-rose" /> Lumière Crafts
+              <Sparkles className="w-5 h-5 text-rose" /> JK Graphix
             </Link>
             <p className="text-sm text-cream/70 max-w-sm">Handcrafted personalized keepsakes, designed to tell your unique story. Made with love in our artisan workshop.</p>
           </div>
@@ -259,7 +259,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-cream/20 text-center text-xs text-cream/50">
-          <p>© {new Date().getFullYear()} Lumière Crafts. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} JK Graphix. All rights reserved.</p>
         </div>
       </footer>
     </div>
