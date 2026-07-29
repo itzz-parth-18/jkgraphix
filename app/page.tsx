@@ -53,7 +53,7 @@ export default function HomePage() {
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
               <span className="inline-flex items-center gap-2 bg-[#C89A84]/15 text-[#1F1816] px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
-                <SparklesIconCustom className="w-3.5 h-3.5 text-[#C89A84]" /> Crafting Memories, One Gift at a Time
+                <SparklesIconCustom className="w-3.5 h-3.5 text-[#C89A84]" /> Custom Perfection, Tailored To Your Vision
               </span>
               <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-semibold leading-tight text-[#1F1816]">
                 Gifts engraved with <span className="italic text-[#C89A84]">their story</span>, not just their name.
