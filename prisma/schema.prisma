@@ -2,13 +2,8 @@ generator client {
   provider = "prisma-client-js"
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Product {
@@ -53,14 +48,14 @@ model Order {
 }
 
 model OrderItem {
-  id             String  @id @default(cuid())
+  id             String   @id @default(cuid())
   orderId        String
   productId      String
-  quantity       Int     @default(1)
-  unitPrice      Decimal @db.Decimal(10, 2)
+  quantity       Int      @default(1)
+  unitPrice      Decimal  @db.Decimal(10, 2)
   customizations Json?
-  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product        Product @relation(fields: [productId], references: [id])
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product  @relation(fields: [productId], references: [id])
 }
 
 enum OrderStatus {
