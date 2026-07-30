@@ -1,5 +1,5 @@
 // ==========================================
-// 1. Edit Product Page
+// Edit Product Page (Fixed Status Values)
 // Location: app/admin/products/edit/[id]/page.tsx
 // ==========================================
 
@@ -69,7 +69,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       if (res.ok) {
         router.push("/admin/products");
       } else {
-        alert("Failed to update product");
+        const errData = await res.json();
+        alert("Failed to update product: " + (errData.error || "Unknown error"));
       }
     } catch (error) {
       alert("Error updating product");
