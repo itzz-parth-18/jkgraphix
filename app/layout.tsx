@@ -5,6 +5,7 @@ import "./globals.css";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "@/app/api/uploadthing/core";
+import Footer from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,8 +32,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        {children}
+      <body className="min-h-full flex flex-col justify-between">
+        <div className="flex-grow">{children}</div>
+        
+        <Footer />
+
         {/* Razorpay Checkout SDK Script */}
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
