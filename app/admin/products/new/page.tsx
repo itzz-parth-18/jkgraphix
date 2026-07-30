@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Upload, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Upload, Image as ImageIcon, X } from "lucide-react";
 
 export default function AddProductPage() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function AddProductPage() {
     isSeasonal: false,
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -39,6 +39,29 @@ export default function AddProductPage() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFormData((prev) => ({
+            ...prev,
+            galleryUrls: [...prev.galleryUrls, reader.result as string],
+          }));
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      galleryUrls: prev.galleryUrls.filter((_, i) => i !== index),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -156,27 +179,43 @@ export default function AddProductPage() {
               <div className="flex items-center gap-3">
                 <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm text-[#6E625C] hover:bg-[#EFE8E2] cursor-pointer transition">
                   <Upload className="w-4 h-4" />
-                  <span>Choose Image File</span>
-                  <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                  <span>Choose Thumbnail</span>
+                  <input type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
                 </label>
               </div>
               {formData.thumbnailUrl && (
                 <div className="mt-2 flex items-center gap-3">
-                  <img src={formData.thumbnailUrl} alt="Preview" className="w-12 h-12 object-cover rounded-lg border border-[#EFE8E2]" />
-                  <span className="text-xs text-emerald-700 font-medium">Image attached</span>
+                  <img src={formData.thumbnailUrl} alt="Thumbnail Preview" className="w-12 h-12 object-cover rounded-lg border border-[#EFE8E2]" />
+                  <span className="text-xs text-emerald-700 font-medium">Thumbnail attached</span>
                 </div>
               )}
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Gallery Images (Comma-separated URLs)</label>
-              <input
-                type="text"
-                placeholder="https://img1.jpg, https://img2.jpg"
-                value={formData.galleryUrls.join(", ")}
-                onChange={(e) => setFormData({ ...formData, galleryUrls: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
-                className="w-full px-4 py-2.5 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm focus:outline-none focus:border-[#C89A84]"
-              />
+              <label className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Gallery Images (Choose Files)</label>
+              <div className="flex items-center gap-3">
+                <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm text-[#6E625C] hover:bg-[#EFE8E2] cursor-pointer transition">
+                  <Upload className="w-4 h-4" />
+                  <span>Choose Gallery Images</span>
+                  <input type="file" accept="image/*" multiple onChange={handleGalleryChange} className="hidden" />
+                </label>
+              </div>
+              {formData.galleryUrls.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {formData.galleryUrls.map((url, idx) => (
+                    <div key={idx} className="relative group">
+                      <img src={url} alt={`Gallery ${idx}`} className="w-12 h-12 object-cover rounded-lg border border-[#EFE8E2]" />
+                      <button
+                        type="button"
+                        onClick={() => removeGalleryImage(idx)}
+                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 shadow hover:bg-red-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
