@@ -41,10 +41,11 @@ export default function AdminProductsPage() {
       const res = await fetch("/api/admin/products");
       if (res.ok) {
         const data = await res.json();
-        setProducts(data);
+        setProducts(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error("Failed to load products", error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -63,8 +64,8 @@ export default function AdminProductsPage() {
   };
 
   const filteredProducts = products.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          p.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (p.category || "").toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === "ALL" || p.category === categoryFilter;
     const matchesType = typeFilter === "ALL" || p.productType === typeFilter;
     const matchesStatus = statusFilter === "ALL" || p.status === statusFilter;
@@ -181,7 +182,7 @@ export default function AdminProductsPage() {
                       </div>
                     </td>
                     <td className="py-4 px-6 font-medium text-[#2C2320]">{product.category}</td>
-                    <td className="py-4 px-6 font-medium text-[#1F1816]">₹{product.price.toLocaleString("en-IN")}</td>
+                    <td className="py-4 px-6 font-medium text-[#1F1816]">₹{(product.price || 0).toLocaleString("en-IN")}</td>
                     <td className="py-4 px-6">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
                         product.productType === "QUICK_CUSTOMIZE" ? "bg-amber-50 text-amber-800" : "bg-purple-50 text-purple-800"
@@ -197,7 +198,7 @@ export default function AdminProductsPage() {
                         {product.status === "PUBLISHED" && <CheckCircle2 className="w-3 h-3" />}
                         {product.status === "DRAFT" && <Clock className="w-3 h-3" />}
                         {product.status === "OUT_OF_STOCK" && <AlertCircle className="w-3 h-3" />}
-                        {product.status.replace("_", " ")}
+                        {(product.status || "DRAFT").replace("_", " ")}
                       </span>
                     </td>
                     <td className="py-4 px-6">
