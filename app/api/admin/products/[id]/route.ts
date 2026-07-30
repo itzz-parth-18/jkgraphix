@@ -1,8 +1,3 @@
-// ==========================================
-// 2. Product Update & Delete API Route
-// Location: app/api/admin/products/[id]/route.ts
-// ==========================================
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -10,25 +5,28 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const { id } = await params;
     const body = await req.json();
+    console.log("DEBUG EDIT PRODUCT PAYLOAD:", body); // Check Vercel logs if it fails
+
     const { name, description, basePrice, price, sku, imageUrl, status } = body;
 
-    const finalPrice = basePrice !== undefined ? basePrice : (price !== undefined ? price : 0);
+    const finalPrice = basePrice !== undefined && basePrice !== "" ? Number(basePrice) : (price !== undefined && price !== "" ? Number(price) : 0);
+
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (finalPrice !== undefined) updateData.basePrice = finalPrice;
+    if (sku !== undefined) updateData.sku = sku;
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+    if (status !== undefined) updateData.status = status;
 
     const updatedProduct = await (prisma as any).product.update({
       where: { id },
-      data: {
-        name,
-        description,
-        basePrice: finalPrice,
-        sku,
-        imageUrl,
-        status: status || "PUBLISHED",
-      },
+      data: updateData,
     });
 
     return NextResponse.json(updatedProduct, { status: 200 });
   } catch (error: any) {
-    console.error("Error updating product:", error);
+    console.error("Error updating product API:", error);
     return NextResponse.json({ error: error.message || "Failed to update product" }, { status: 500 });
   }
 }
