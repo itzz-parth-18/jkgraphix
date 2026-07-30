@@ -5,7 +5,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const { id } = await params;
     const body = await req.json();
-    console.log("DEBUG EDIT PRODUCT PAYLOAD:", body); // Check Vercel logs if it fails
 
     const { name, description, basePrice, price, sku, imageUrl, status } = body;
 
