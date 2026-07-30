@@ -1,44 +1,94 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params;
-    const body = await req.json();
+// Helper function to generate a unique slug
+async function generateUniqueSlug(name: string): Promise<string> {
+  const baseSlug = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
-    const { name, description, basePrice, price, sku, imageUrl, status } = body;
+  let slug = baseSlug || "product";
+  let counter = 1;
 
-    const finalPrice = basePrice !== undefined && basePrice !== "" ? Number(basePrice) : (price !== undefined && price !== "" ? Number(price) : 0);
-
-    const updateData: any = {};
-    if (name !== undefined) updateData.name = name;
-    if (description !== undefined) updateData.description = description;
-    if (finalPrice !== undefined) updateData.basePrice = finalPrice;
-    if (sku !== undefined) updateData.sku = sku;
-    if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
-    if (status !== undefined) updateData.status = status;
-
-    const updatedProduct = await (prisma as any).product.update({
-      where: { id },
-      data: updateData,
+  while (true) {
+    const existing = await (prisma as any).product.findUnique({
+      where: { slug },
     });
 
-    return NextResponse.json(updatedProduct, { status: 200 });
+    if (!existing) {
+      break;
+    }
+
+    counter++;
+    slug = `${baseSlug}-${counter}`;
+  }
+
+  return slug;
+}
+
+// GET: Fetch all products cleanly
+export async function GET() {
+  try {
+    const products = await (prisma as any).product.findMany({
+      orderBy: { createdAt: "desc" },
+    }).catch(() => []);
+
+    return NextResponse.json(products, { status: 200 });
   } catch (error: any) {
-    console.error("Error updating product API:", error);
-    return NextResponse.json({ error: error.message || "Failed to update product" }, { status: 500 });
+    console.error("Error fetching products:", error);
+    return NextResponse.json([], { status: 200 });
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+// POST: Create a new product handling all form fields properly
+export async function POST(req: Request) {
   try {
-    const { id } = await params;
-    await (prisma as any).product.delete({
-      where: { id },
+    const body = await req.json();
+    console.log("DEBUG CREATE PRODUCT PAYLOAD:", body);
+
+    const { 
+      name, 
+      description, 
+      basePrice, 
+      price, 
+      sku, 
+      imageUrl, 
+      thumbnailUrl, 
+      fullDescription, 
+      shortDescription,
+      status 
+    } = body;
+
+    if (!name) {
+      return NextResponse.json({ error: "Product name is required" }, { status: 400 });
+    }
+
+    const slug = await generateUniqueSlug(name);
+
+    const finalPrice = basePrice !== undefined && basePrice !== "" ? Number(basePrice) : (price !== undefined && price !== "" ? Number(price) : 0);
+    const finalSku = sku || `SKU-${Date.now()}`;
+    const finalImageUrl = thumbnailUrl || imageUrl || "";
+    const finalDesc = fullDescription || description || shortDescription || name;
+    const finalStatus = status || "PUBLISHED";
+
+    const newProduct = await (prisma as any).product.create({
+      data: {
+        name,
+        slug,
+        description: finalDesc,
+        basePrice: finalPrice,
+        sku: finalSku,
+        imageUrl: finalImageUrl,
+        status: finalStatus,
+      },
     });
-    return NextResponse.json({ success: true }, { status: 200 });
+
+    return NextResponse.json(newProduct, { status: 201 });
   } catch (error: any) {
-    console.error("Error deleting product:", error);
-    return NextResponse.json({ error: error.message || "Failed to delete product" }, { status: 500 });
+    console.error("Error creating product API:", error);
+    return NextResponse.json({ error: error.message || "Failed to create product" }, { status: 500 });
   }
 }
