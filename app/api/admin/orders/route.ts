@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET: Fetch all incoming orders cleanly with type casting
+// GET: Fetch all incoming orders cleanly
 export async function GET() {
   try {
     const dbOrders = await prisma.order.findMany({
@@ -19,7 +19,6 @@ export async function GET() {
       const item: any = order.items?.[0] || {};
       const customData = (item.customizations as any) || {};
 
-      // Extracting actual photos safely from customizations JSON or item
       let photos: string[] = [];
       if (Array.isArray(customData.photos)) {
         photos = customData.photos;
@@ -27,8 +26,6 @@ export async function GET() {
         photos = [customData.photoUrl];
       } else if (typeof customData.photo === "string") {
         photos = [customData.photo];
-      } else if (Array.isArray(item.photos)) {
-        photos = item.photos;
       }
 
       return {

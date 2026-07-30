@@ -1,8 +1,3 @@
-// ==========================================
-// 1. Orders Management Page with Dual Tabs
-// Location: app/admin/orders/page.tsx
-// ==========================================
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -538,7 +533,8 @@ export default function AdminOrdersPage() {
                 {selectedOrder.customization.customMessage && <p><strong className="text-[#6E625C]">Custom Message:</strong> {selectedOrder.customization.customMessage}</p>}
                 {selectedOrder.customization.notes && <p><strong className="text-[#6E625C]">Additional Notes:</strong> {selectedOrder.customization.notes}</p>}
                 {selectedOrder.customization.deliveryDate && <p><strong className="text-[#6E625C]">Requested Delivery Date:</strong> {selectedOrder.customization.deliveryDate}</p>}
-                {selectedOrder.customization.photos?.length > 0 && (
+                
+                {selectedOrder.customization.photos?.length > 0 ? (
                   <div>
                     <strong className="text-[#6E625C] text-xs block mb-2">Uploaded Photos:</strong>
                     <div className="flex gap-2 flex-wrap">
@@ -549,7 +545,9 @@ export default function AdminOrdersPage() {
                       ))}
                     </div>
                   </div>
-                )}
+                ) : !selectedOrder.customization.customName && !selectedOrder.customization.customMessage && !selectedOrder.customization.notes ? (
+                  <p className="text-xs text-[#8C7A72] italic">No photos or extra customizations were provided for this order.</p>
+                ) : null}
               </div>
             </div>
 
