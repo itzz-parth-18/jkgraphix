@@ -96,7 +96,7 @@ export default function CartDrawer({
         key: data.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: data.amount,
         currency: data.currency || "INR",
-        name: "Lumière Crafts",
+        name: "JK Graphix",
         description: "Customized Keepsake Order",
         order_id: data.razorpayOrderId,
         handler: async function (response: {

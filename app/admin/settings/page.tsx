@@ -21,7 +21,7 @@ export default function AdminSettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-espresso mb-1">Store Name</label>
-              <input type="text" defaultValue="Lumière Crafts" className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" />
+              <input type="text" defaultValue="JK Graphix" className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" />
             </div>
             <div>
               <label className="block text-sm font-medium text-espresso mb-1">Support Email</label>

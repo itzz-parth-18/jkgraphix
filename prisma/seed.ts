@@ -17,7 +17,7 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("Seeding Lumière Crafts database...");
+  console.log("Seeding JK Graphix database...");
 
   await prisma.customField.deleteMany();
   await prisma.product.deleteMany();

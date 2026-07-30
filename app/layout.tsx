@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lumière Crafts — Personalized Keepsakes",
+  title: "JK Graphix — Personalized Keepsakes",
   description: "Handcrafted custom gifts and laser-engraved memory boxes.",
 };
 

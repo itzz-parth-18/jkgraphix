@@ -26,7 +26,7 @@ function OrderSuccessContent() {
             Thank You for Your Order!
           </h1>
           <p className="text-sm text-taupe max-w-md">
-            We’ve received your customized request. Our artisans at Lumière Crafts are preparing your keepsake with love and precision.
+            We’ve received your customized request. Our artisans at JK Graphix are preparing your keepsake with love and precision.
           </p>
         </div>
 
@@ -88,7 +88,7 @@ function OrderSuccessContent() {
 
         {/* Brand Note */}
         <div className="pt-4 border-t border-taupe-border/40 flex items-center justify-center gap-1.5 text-xs text-taupe-light">
-          Crafted with care by Lumière Crafts <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400" />
+          Crafted with care by JK Graphix <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400" />
         </div>
 
       </div>
