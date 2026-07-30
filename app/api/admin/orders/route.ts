@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET: Fetch all incoming orders with smart customization fallback for testing
+// GET: Fetch all incoming orders cleanly with type casting
 export async function GET() {
   try {
     const dbOrders = await prisma.order.findMany({
@@ -16,46 +16,42 @@ export async function GET() {
     });
 
     const formattedOrders = dbOrders.map((order) => {
-      const item = order.items?.[0] || {};
+      const item: any = order.items?.[0] || {};
       const customData = (item.customizations as any) || {};
 
-      // Extracting photos with fallback for legacy test orders
+      // Extracting actual photos safely from customizations JSON or item
       let photos: string[] = [];
-      if (Array.isArray(customData.photos) && customData.photos.length > 0) {
+      if (Array.isArray(customData.photos)) {
         photos = customData.photos;
       } else if (typeof customData.photoUrl === "string") {
         photos = [customData.photoUrl];
       } else if (typeof customData.photo === "string") {
         photos = [customData.photo];
-      } else {
-        // Fallback sample image for testing if none was saved in database
-        photos = ["https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500&auto=format&fit=crop&q=60"];
+      } else if (Array.isArray(item.photos)) {
+        photos = item.photos;
       }
 
       return {
         id: order.id,
-        customerName: order.customerName || "Parth",
-        phone: order.customerPhone || "+91 98765 43210",
-        email: order.customerEmail || "parth@example.com",
-        address: order.shippingAddress || "123, Heritage Lane, New Delhi",
-        productName: item.product?.name || "Custom Memory Box",
+        customerName: order.customerName,
+        phone: order.customerPhone || "—",
+        email: order.customerEmail || "—",
+        address: order.shippingAddress || "—",
+        productName: item.product?.name || "Custom Product",
         category: "Memory Boxes",
-        amount: Number(order.totalAmount) || 48,
-        paymentMethod: "Online (UPI)",
+        amount: Number(order.totalAmount) || 0,
+        paymentMethod: "Online",
         paymentStatus: "PAID",
         orderStatus: order.status || "PENDING",
         date: new Date(order.createdAt).toLocaleDateString("en-IN"),
         customization: {
           photos: photos,
-          customName: customData.customName || customData.name || "Parth & Anjali",
-          customMessage: customData.customMessage || customMessageFallback(customData),
-          notes: customData.notes || customData.additionalNotes || "Please make the engraving deep and dark.",
-          deliveryDate: customData.deliveryDate || "2026-08-10",
+          customName: customData.customName || customData.name || "",
+          customMessage: customData.customMessage || customData.message || "",
+          notes: customData.notes || customData.additionalNotes || "",
+          deliveryDate: customData.deliveryDate || "",
         },
-        internalNotes: [
-          "Customer requested premium gift packaging.",
-          "Waiting for final polish check."
-        ],
+        internalNotes: [],
       };
     });
 
@@ -67,11 +63,6 @@ export async function GET() {
     console.error("Error fetching orders api:", error);
     return NextResponse.json({ orders: [], consultations: [] }, { status: 500 });
   }
-}
-
-function customMessageFallback(data: any) {
-  if (data.message) return data.message;
-  return "Forever in our hearts - Est. 2026";
 }
 
 // PATCH: Update order status
