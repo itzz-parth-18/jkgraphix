@@ -1,5 +1,5 @@
 // ==========================================
-// Edit Product Page (Fixed Status Values)
+// Edit Product Page with Direct File Upload
 // Location: app/admin/products/edit/[id]/page.tsx
 // ==========================================
 
@@ -7,7 +7,7 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Save, Upload, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -46,6 +46,18 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       console.error("Failed to fetch product", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle local file selection and convert to preview data URL
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -124,8 +136,20 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6E625C] uppercase mb-1">Image URL</label>
-            <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className="w-full px-4 py-2.5 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm focus:outline-none focus:border-[#C89A84]" />
+            <label className="block text-xs font-semibold text-[#6E625C] uppercase mb-1">Product Image (Choose File)</label>
+            <div className="flex items-center gap-3">
+              <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm text-[#6E625C] hover:bg-[#EFE8E2] cursor-pointer transition">
+                <Upload className="w-4 h-4" />
+                <span>Choose Image File</span>
+                <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+              </label>
+            </div>
+            {imageUrl && (
+              <div className="mt-2 flex items-center gap-3">
+                <img src={imageUrl} alt="Preview" className="w-12 h-12 object-cover rounded-lg border border-[#EFE8E2]" />
+                <span className="text-xs text-emerald-700 font-medium">Image uploaded successfully</span>
+              </div>
+            )}
           </div>
 
           <div className="md:col-span-2">
