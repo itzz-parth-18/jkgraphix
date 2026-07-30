@@ -20,8 +20,12 @@ export async function GET() {
       const customData = (item.customizations as any) || {};
 
       let photos: string[] = [];
+
+      // Support all old & new photo field names
       if (Array.isArray(customData.photos)) {
         photos = customData.photos;
+      } else if (typeof customData.photo_upload === "string") {
+        photos = [customData.photo_upload];
       } else if (typeof customData.photoUrl === "string") {
         photos = [customData.photoUrl];
       } else if (typeof customData.photo === "string") {
@@ -41,24 +45,54 @@ export async function GET() {
         paymentStatus: "PAID",
         orderStatus: order.status || "PENDING",
         date: new Date(order.createdAt).toLocaleDateString("en-IN"),
+
         customization: {
-          photos: photos,
-          customName: customData.customName || customData.name || "",
-          customMessage: customData.customMessage || customData.message || "",
-          notes: customData.notes || customData.additionalNotes || "",
-          deliveryDate: customData.deliveryDate || "",
+          photos,
+
+          customName:
+            customData.customName ||
+            customData.name ||
+            customData.engraving_names ||
+            "",
+
+          customMessage:
+            customData.customMessage ||
+            customData.message ||
+            customData.card_message ||
+            "",
+
+          notes:
+            customData.notes ||
+            customData.additionalNotes ||
+            "",
+
+          deliveryDate:
+            customData.deliveryDate ||
+            customData.anniversary_date ||
+            "",
         },
+
         internalNotes: [],
       };
     });
 
-    return NextResponse.json({
-      orders: formattedOrders,
-      consultations: [],
-    }, { status: 200 });
+    return NextResponse.json(
+      {
+        orders: formattedOrders,
+        consultations: [],
+      },
+      { status: 200 }
+    );
   } catch (error: any) {
     console.error("Error fetching orders api:", error);
-    return NextResponse.json({ orders: [], consultations: [] }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        orders: [],
+        consultations: [],
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -67,10 +101,14 @@ export async function PATCH(req: Request) {
   try {
     const body = await req.json();
     const { orderId, status, orderStatus } = body;
+
     const finalStatus = status || orderStatus;
 
     if (!orderId || !finalStatus) {
-      return NextResponse.json({ error: "Missing orderId or status" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing orderId or status" },
+        { status: 400 }
+      );
     }
 
     const updatedOrder = await prisma.order.update({
@@ -81,6 +119,10 @@ export async function PATCH(req: Request) {
     return NextResponse.json(updatedOrder, { status: 200 });
   } catch (error: any) {
     console.error("Error updating order status:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
   }
 }
