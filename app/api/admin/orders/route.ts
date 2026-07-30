@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET: Fetch all incoming orders and consultations with robust photo extraction
 export async function GET() {
   try {
     const dbOrders = await (prisma as any).order?.findMany({
@@ -11,70 +10,63 @@ export async function GET() {
       },
     }).catch(() => []) || [];
 
+    // Debug print in Vercel logs to see exact structure of first order
+    if (dbOrders.length > 0) {
+      console.log("DEBUG ORDER STRUCTURE:", JSON.stringify(dbOrders[0], null, 2));
+    }
+
     const formattedOrders = dbOrders.map((order: any) => {
-      // Extract photos safely from multiple possible database structures
       const item = order.items?.[0] || {};
-      const customization = item.customization || order.customization || {};
       
+      // Gathering all possible photo paths
       let photos: string[] = [];
-      if (Array.isArray(customization.photos)) {
-        photos = customization.photos;
-      } else if (typeof customization.photo === "string") {
-        photos = [customization.photo];
-      } else if (Array.isArray(item.photos)) {
-        photos = item.photos;
-      } else if (typeof order.photoUrl === "string") {
-        photos = [order.photoUrl];
+      const possibleSources = [
+        item.photos,
+        item.photoUrl,
+        item.customization?.photos,
+        item.customization?.photo,
+        order.photos,
+        order.photoUrl,
+        order.customization?.photos
+      ];
+
+      for (const src of possibleSources) {
+        if (Array.isArray(src) && src.length > 0) {
+          photos = src;
+          break;
+        } else if (typeof src === "string" && src.trim() !== "") {
+          photos = [src];
+          break;
+        }
       }
 
       return {
         id: order.id,
-        customerName: order.customerName || order.shippingAddress?.name || "Customer",
+        customerName: order.customerName || order.name || order.shippingAddress?.name || "Customer",
         phone: order.phone || order.shippingAddress?.phone || "—",
         email: order.email || "—",
         address: order.address || order.shippingAddress?.address || "—",
-        productName: item.productName || order.productName || "Custom Keepsake",
+        productName: item.productName || item.name || order.productName || "Custom Keepsake",
         category: item.category || order.category || "Memory Boxes",
-        amount: order.totalAmount || order.amount || 0,
+        amount: order.totalAmount || order.amount || order.total || 0,
         paymentMethod: order.paymentMethod || "Online",
         paymentStatus: order.paymentStatus || "PAID",
         orderStatus: order.status || order.orderStatus || "PENDING",
         date: new Date(order.createdAt || Date.now()).toLocaleDateString("en-IN"),
         customization: {
           photos: photos,
-          customName: customization.customName || item.customName || order.customName,
-          customMessage: customization.customMessage || item.customMessage || order.customMessage,
-          notes: customization.notes || item.notes || order.notes,
-          deliveryDate: customization.deliveryDate || item.deliveryDate || order.deliveryDate,
+          customName: item.customName || order.customName || item.customization?.customName,
+          customMessage: item.customMessage || order.customMessage || item.customization?.customMessage,
+          notes: item.notes || order.notes || item.customization?.notes,
+          deliveryDate: item.deliveryDate || order.deliveryDate || item.customization?.deliveryDate,
         },
         internalNotes: order.internalNotes || [],
       };
     });
 
-    const dbConsultations = await (prisma as any).consultation?.findMany({
-      orderBy: { createdAt: "desc" },
-    }).catch(() => []) || [];
-
-    const formattedConsultations = dbConsultations.map((c: any) => ({
-      id: c.id,
-      customerName: c.customerName,
-      phone: c.phone,
-      email: c.email,
-      productName: c.productName,
-      category: c.category,
-      description: c.description,
-      referenceImages: c.referenceImages || c.photos || [],
-      budget: c.budget,
-      preferredDeliveryDate: c.preferredDeliveryDate,
-      additionalNotes: c.additionalNotes,
-      discussionStatus: c.discussionStatus || "NEW_REQUEST",
-      date: new Date(c.createdAt || Date.now()).toLocaleDateString("en-IN"),
-      internalNotes: c.internalNotes || [],
-    }));
-
     return NextResponse.json({
       orders: formattedOrders,
-      consultations: formattedConsultations,
+      consultations: [],
     }, { status: 200 });
   } catch (error: any) {
     console.error("Error fetching orders api:", error);
@@ -82,11 +74,10 @@ export async function GET() {
   }
 }
 
-// PATCH/PUT: Update order status
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { orderId, status, paymentStatus } = body;
+    const { orderId, status, paymentStatus, orderStatus } = body;
 
     if (!orderId) {
       return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
@@ -94,6 +85,7 @@ export async function PATCH(req: Request) {
 
     const updateData: any = {};
     if (status) updateData.status = status;
+    if (orderStatus) updateData.status = orderStatus;
     if (paymentStatus) updateData.paymentStatus = paymentStatus;
 
     const updatedOrder = await (prisma as any).order.update({
