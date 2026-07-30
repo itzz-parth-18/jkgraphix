@@ -1,3 +1,8 @@
+// ==========================================
+// 3. Categories API Route
+// Location: app/api/admin/categories/route.ts
+// ==========================================
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -6,23 +11,22 @@ export async function GET() {
     const categories = await (prisma as any).category.findMany({
       include: { _count: { select: { products: true } } },
       orderBy: { displayOrder: "asc" },
-    });
+    }).catch(() => []);
 
     const formatted = categories.map((c: any) => ({
       ...c,
       productCount: c._count?.products || 0,
     }));
 
-    return NextResponse.json(formatted);
+    return NextResponse.json(formatted, { status: 200 });
   } catch (error) {
-    return NextResponse.json([]);
+    return NextResponse.json([], { status: 200 });
   }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-
     const newCategory = await (prisma as any).category.create({
       data: {
         name: body.name,
