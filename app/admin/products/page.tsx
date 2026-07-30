@@ -1,5 +1,5 @@
 // ==========================================
-// 2. Product Management Page
+// Product Management Page (Fixed Import Error)
 // Location: app/admin/products/page.tsx
 // ==========================================
 
@@ -8,16 +8,25 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Search, Filter, Edit3, Trash2, Eye, Image as ImageIcon, CheckCircle2, Clock, AlertCircle, Star } from "lucide-react";
-import { Category } from "../categories/page";
 
 export type ProductType = "QUICK_CUSTOMIZE" | "DESIGN_CONSULTATION";
 export type ProductStatus = "DRAFT" | "PUBLISHED" | "OUT_OF_STOCK";
+
+export interface CategoryModel {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+  displayOrder: number;
+  isVisible: boolean;
+}
 
 export interface Product {
   id: string;
   name: string;
   categoryId: string;
-  category?: Category;
+  category?: CategoryModel;
   categoryName?: string;
   price: number;
   shortDescription: string;
@@ -41,7 +50,7 @@ export interface Product {
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryModel[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [typeFilter, setTypeFilter] = useState("ALL");
