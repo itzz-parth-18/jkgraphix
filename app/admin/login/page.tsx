@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Sparkles } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -37,9 +37,16 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen bg-cream flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center text-espresso">
-          <Sparkles className="w-10 h-10 text-rose" />
-        </div>
+        <div className="flex justify-center">
+        <Image
+        src="/images/logo.jpeg"
+        alt="JK Graphix"
+        width={90}
+       height={90}
+        priority
+        className="rounded-xl object-contain"
+       />
+    </div>
         <h2 className="mt-6 text-center text-3xl font-serif font-bold text-espresso">
           Workshop Access
         </h2>
