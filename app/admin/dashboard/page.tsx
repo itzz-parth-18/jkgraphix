@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export default async function Dashboard() {
@@ -14,7 +14,7 @@ export default async function Dashboard() {
 
   return (
     <div className="p-8">
-      <h1 className="mb-4 text-3xl font-bold font-serif text-espresso">
+      <h1 className="mb-4 font-serif text-3xl font-bold text-espresso">
         Workshop Dashboard
       </h1>
 
@@ -31,6 +31,22 @@ export default async function Dashboard() {
           <strong>Role:</strong> {session.user.role}
         </p>
       </div>
+
+      <form
+        action={async () => {
+          "use server";
+          await signOut({
+            redirectTo: "/admin/login",
+          });
+        }}
+      >
+        <button
+          type="submit"
+          className="mt-6 rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
+        >
+          Logout
+        </button>
+      </form>
     </div>
   );
 }
