@@ -1,18 +1,20 @@
-import { withAuth } from "next-auth/middleware";
+import { auth } from "@/lib/auth";
 
-export default withAuth({
-  pages: {
-    signIn: "/admin/login", // User ko yahan bhej do agar login nahi hai
-  },
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
+
+  // Allow the login page without authentication
+  if (pathname === "/admin/login") {
+    return;
+  }
+
+  const isAdminRoute = pathname.startsWith("/admin");
+
+  if (!req.auth && isAdminRoute) {
+    return Response.redirect(new URL("/admin/login", req.url));
+  }
 });
 
-// Yahan hum batate hain kin-kin raaston (routes) par taala lagana hai
 export const config = {
-  matcher: [
-    "/admin",
-    "/admin/dashboard/:path*",
-    "/admin/orders/:path*",
-    "/admin/products/:path*",
-    "/admin/settings/:path*"
-  ],
+  matcher: ["/admin/:path*"],
 };
