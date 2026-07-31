@@ -23,21 +23,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
 
       async authorize(credentials) {
-  const adminEmail = "admin@lumierecrafts.com";
-  const adminPassword = "admin123";
-
-  if (
-    credentials?.email === adminEmail &&
-    credentials?.password === adminPassword
-  ) {
-    return {
-      id: "1",
-      name: "Workshop Admin",
-      email: adminEmail,
-    };
+  if (!credentials?.email || !credentials?.password) {
+    return null;
   }
 
-  return null;
+  const user = await prisma.user.findUnique({
+    where: {
+      email: credentials.email as string,
+    },
+  });
+
+  if (!user || !user.password) {
+    return null;
+  }
+
+  const validPassword = await bcrypt.compare(
+    credentials.password as string,
+    user.password
+  );
+
+  if (!validPassword) {
+    return null;
+  }
+
+  return user;
 },
     }),
   ],
