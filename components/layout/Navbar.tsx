@@ -5,7 +5,8 @@ import { auth, signOut } from "@/lib/auth";
 
 export default async function Navbar() {
   const session = await auth();
-
+  console.log("Navbar session:", session);
+  
   return (
     <nav className="sticky top-0 z-40 border-b border-[#EFE8E2] bg-[#F9F6F2]/90 px-6 py-4 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
