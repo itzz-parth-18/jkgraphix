@@ -1,23 +1,136 @@
-import Link from "next/link";
-import { ArrowLeft, ShoppingCart } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
+import { prisma } from "@/lib/prisma";
 
-export default function ShopIndexPage() {
+import ShopHeader from "@/components/shop/ShopHeader";
+import ShopControls from "@/components/shop/ShopControls";
+import ProductGrid from "@/components/shop/ProductGrid";
+import EmptyState from "@/components/shop/EmptyState";
+import Pagination from "@/components/shop/Pagination";
+
+type SearchParams = {
+  search?: string;
+  category?: string;
+  sort?: string;
+  page?: string;
+};
+
+type Props = {
+  searchParams: Promise<SearchParams>;
+};
+
+const PAGE_SIZE = 12;
+
+export default async function ShopPage({ searchParams }: Props) {
+  const params = await searchParams;
+
+  const search = params.search ?? "";
+  const category = params.category ?? "all";
+  const sort = params.sort ?? "newest";
+  const page = Number(params.page ?? "1");
+
+  const where: any = {
+    status: "PUBLISHED",
+  };
+
+  if (search) {
+    where.OR = [
+      {
+        name: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        description: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+    ];
+  }
+
+  // Category filter will be enabled once Product has a category field.
+
+  let orderBy: any = {
+    createdAt: "desc",
+  };
+
+  switch (sort) {
+    case "price-asc":
+      orderBy = {
+        basePrice: "asc",
+      };
+      break;
+
+    case "price-desc":
+      orderBy = {
+        basePrice: "desc",
+      };
+      break;
+
+    case "alphabetical":
+      orderBy = {
+        name: "asc",
+      };
+      break;
+
+    default:
+      orderBy = {
+        createdAt: "desc",
+      };
+  }
+
+  const totalProducts = await (prisma as any).product.count({
+    where,
+  });
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalProducts / PAGE_SIZE)
+  );
+
+  const products = await (prisma as any).product.findMany({
+    where,
+    orderBy,
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  });
+
+  const formattedProducts = products.map((product: any) => ({
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    description: product.description,
+    price: Number(product.basePrice),
+    imageUrl:
+      product.imageUrl ||
+      "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500&auto=format&fit=crop&q=60",
+    category: "Memory Boxes",
+  }));
+
+  const categories = ["Memory Boxes"];
+
   return (
-    <div className="min-h-screen bg-[#F9F6F2] text-[#2C2320] flex flex-col">
+        <div className="min-h-screen bg-[#F9F6F2]">
       <Navbar />
-      <main className="flex-grow max-w-6xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <h1 className="font-serif text-4xl font-bold text-[#1F1816]">Our Collection</h1>
-          <p className="text-[#6E625C] mt-2">Explore our custom handcrafted memory boxes and keepsakes</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          <Link href="/shop/custom-memory-box" className="bg-white p-6 rounded-2xl border border-[#EFE8E2] shadow-sm hover:border-[#C89A84] transition block">
-            <h3 className="font-serif font-bold text-lg text-[#1F1816]">Custom Walnut Memory Box</h3>
-            <p className="text-sm text-[#6E625C] mt-2">Personalized engraving with real-time preview.</p>
-            <span className="inline-block mt-4 text-xs font-semibold text-[#C89A84]">Customize & Buy →</span>
-          </Link>
-        </div>
+
+      <main className="mx-auto max-w-7xl px-6 py-12">
+        <ShopHeader />
+
+        <ShopControls categories={categories} />
+
+        {formattedProducts.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <>
+            <ProductGrid products={formattedProducts} />
+
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+            />
+          </>
+        )}
       </main>
     </div>
   );
