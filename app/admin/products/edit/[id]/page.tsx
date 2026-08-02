@@ -9,6 +9,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Upload, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
+import CustomFieldsEditor from "@/components/admin/products/CustomFieldsEditor";
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -158,6 +159,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
+        <CustomFieldsEditor productId={id} />
+        
         <div className="pt-4 border-t border-[#EFE8E2] flex justify-end gap-3">
           <Link href="/admin/products" className="px-5 py-2.5 rounded-xl text-sm font-medium bg-[#F9F6F2] hover:bg-[#EFE8E2] text-[#6E625C]">Cancel</Link>
           <button type="submit" disabled={saving} className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium bg-[#1F1816] text-[#F9F6F2] hover:bg-[#322724] transition shadow-sm">
