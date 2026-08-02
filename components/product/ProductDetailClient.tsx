@@ -44,25 +44,42 @@ export default function ProductDetailClient({
 
   return errors.length === 0;
 };
-  const handleAddToCart = () => {
+ const handleAddToCart = async () => {
+  if (!validateCustomFields()) {
+    return;
+  }
 
-if (!validateCustomFields()) {
-  return;
-}
+  try {
+    const res = await fetch("/api/cart", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        productId: product.id,
+        quantity,
+        customizations: customizationData,
+      }),
+    });
 
-    const newItem: CartItem = {
-      id: Date.now().toString(),
-      name: product.name,
-      price: Number(product.basePrice),
-      quantity,
-      image: selectedImage,
-      customizations: customizationData,
-    };
+    if (res.status === 401) {
+      window.location.href = "/login?callbackUrl=/cart";
+      return;
+    }
 
+    if (!res.ok) {
+      alert("Failed to add item to cart.");
+      return;
+    }
 
-    setCartItems((prev) => [...prev, newItem]);
-    setIsCartOpen(true);
-  };
+    alert("Product added to cart!");
+
+    setIsCartOpen(false);
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong.");
+  }
+};
 
   const handleRemoveItem = (id: string) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));

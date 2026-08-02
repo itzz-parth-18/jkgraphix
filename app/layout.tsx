@@ -6,6 +6,7 @@ import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "@/app/api/uploadthing/core";
 import Footer from "@/components/Footer";
+import AuthSessionProvider from "@/components/providers/SessionProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,17 +34,21 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col justify-between">
-        <div className="flex-grow">{children}</div>
-        
-        <Footer />
+  <AuthSessionProvider>
+    <div className="flex-grow">{children}</div>
 
-        {/* Razorpay Checkout SDK Script */}
-        <Script
-          src="https://checkout.razorpay.com/v1/checkout.js"
-          strategy="lazyOnload"
-        />
-        <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
-      </body>
+    <Footer />
+
+    <Script
+      src="https://checkout.razorpay.com/v1/checkout.js"
+      strategy="lazyOnload"
+    />
+
+    <NextSSRPlugin
+      routerConfig={extractRouterConfig(ourFileRouter)}
+    />
+  </AuthSessionProvider>
+</body>
     </html>
   );
 }
