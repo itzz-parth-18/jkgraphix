@@ -1,45 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getCart } from "@/lib/cart";
 
 export async function GET() {
-  const session = await auth();
+  try {
+  const cart = await getCart();
 
-  if (!session?.user?.email) {
+  if (!cart) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
     );
   }
 
-  try {
-    const user = await prisma.user.findUnique({
-      where: {
-        email: session.user.email,
-      },
-      include: {
-  cart: {
-    include: {
-      items: {
-        include: {
-          product: {
-            include: {
-              customFields: {
-                orderBy: {
-                  sortOrder: "asc",
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-},
-    });
-
-    return NextResponse.json(user?.cart ?? null);
-  } catch (error: any) {
+  return NextResponse.json(cart);
+} catch (error: any) {
   console.error("POST /api/cart ERROR:");
   console.error(error);
 

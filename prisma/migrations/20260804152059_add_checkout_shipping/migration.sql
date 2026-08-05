@@ -1,0 +1,10 @@
+-- AlterTable
+ALTER TABLE "Cart" ADD COLUMN     "addressLine1" TEXT,
+ADD COLUMN     "addressLine2" TEXT,
+ADD COLUMN     "city" TEXT,
+ADD COLUMN     "country" TEXT,
+ADD COLUMN     "email" TEXT,
+ADD COLUMN     "fullName" TEXT,
+ADD COLUMN     "phone" TEXT,
+ADD COLUMN     "pinCode" TEXT,
+ADD COLUMN     "state" TEXT;

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "@/app/api/uploadthing/core";
 import Footer from "@/components/Footer";
 import AuthSessionProvider from "@/components/providers/SessionProvider";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,15 +39,15 @@ export default function RootLayout({
 
     <Footer />
 
-    <Script
-      src="https://checkout.razorpay.com/v1/checkout.js"
-      strategy="lazyOnload"
-    />
 
     <NextSSRPlugin
       routerConfig={extractRouterConfig(ourFileRouter)}
     />
   </AuthSessionProvider>
+  <Script
+  src="https://checkout.razorpay.com/v1/checkout.js"
+  strategy="afterInteractive"
+/>
 </body>
     </html>
   );

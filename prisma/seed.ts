@@ -5,12 +5,7 @@ import "dotenv/config";
 
 // Direct object configuration for PostgreSQL connection
 const pool = new Pool({
-  host: "localhost",
-  port: 51214,
-  user: "postgres",
-  password: "postgres",
-  database: "template1",
-  ssl: false,
+  connectionString: process.env.DATABASE_URL,
 });
 
 const adapter = new PrismaPg(pool);

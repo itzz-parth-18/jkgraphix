@@ -37,14 +37,24 @@ model Order {
   id              String      @id @default(cuid())
   orderNumber     String      @unique
   status          OrderStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
   customerName    String
   customerEmail   String
   userId          String?
   customerPhone   String?
   shippingAddress String
+  addressLine1 String?
+  addressLine2 String?
+  city      String?
+  state     String?
+  pinCode   String?
+  country   String?
   subtotal        Decimal     @db.Decimal(10, 2)
   shippingCost    Decimal     @db.Decimal(10, 2)
   totalAmount     Decimal     @db.Decimal(10, 2)
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   user            User?       @relation(fields: [userId], references: [id])
@@ -55,6 +65,8 @@ model OrderItem {
   id             String  @id @default(cuid())
   orderId        String
   productId      String
+  productName  String
+  productImage String?
   quantity       Int     @default(1)
   unitPrice      Decimal @db.Decimal(10, 2)
   customizations Json?
@@ -63,10 +75,22 @@ model OrderItem {
 }
 
 model Cart {
-  id        String     @id @default(cuid())
-  userId    String     @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fullName    String?
+  phone       String?
+  email       String?
+
+  addressLine1 String?
+  addressLine2 String?
+
+  city      String?
+  state     String?
+  pinCode   String?
+  country   String?
 
   user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items CartItem[]
@@ -156,4 +180,10 @@ enum FieldType {
 enum Role {
   CUSTOMER
   ADMIN
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
 }
