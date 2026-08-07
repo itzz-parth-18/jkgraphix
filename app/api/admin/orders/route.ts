@@ -34,6 +34,7 @@ export async function GET() {
 
       return {
         id: order.id,
+        orderNumber: order.orderNumber,
         customerName: order.customerName,
         phone: order.customerPhone || "—",
         email: order.customerEmail || "—",
