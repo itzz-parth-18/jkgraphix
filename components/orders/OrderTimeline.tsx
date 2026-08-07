@@ -37,7 +37,7 @@ export default function OrderTimeline({
               className="flex items-center gap-4"
             >
               <div
-                className={`h-4 w-4 rounded-full ${
+  className={`h-4 w-4 flex-shrink-0 rounded-full ${
                   completed
                     ? "bg-green-600"
                     : "bg-gray-300"

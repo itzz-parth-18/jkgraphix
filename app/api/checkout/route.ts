@@ -61,13 +61,15 @@ export async function POST(req: Request) {
 
         // Check if item.productId exists in DB
         let validProductId = fallbackProduct!.id;
+let productName = fallbackProduct!.name;
         if (item.productId && typeof item.productId === "string") {
           const existingProduct = await prisma.product.findUnique({
             where: { id: item.productId },
           });
           if (existingProduct) {
-            validProductId = existingProduct.id;
-          }
+  validProductId = existingProduct.id;
+  productName = existingProduct.name;
+}
         }
 
         return {
@@ -76,6 +78,9 @@ export async function POST(req: Request) {
               id: validProductId,
             },
           },
+
+productName,
+
           quantity: Number(item.quantity || 1),
           unitPrice: Number(item.basePrice || item.price || item.unitPrice || 0),
           customizations: rawCustomizations,
