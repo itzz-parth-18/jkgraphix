@@ -7,9 +7,15 @@ import {
   Clock, Package, MessageSquare, ArrowRight, User, Phone, Mail, Calendar, Sparkles, FileText
 } from "lucide-react";
 
-export type OrderStatus = 
-  | "PENDING" | "ACCEPTED" | "DESIGNING" | "IN_PRODUCTION" 
-  | "READY_TO_DISPATCH" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+export type OrderStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "DESIGNING"
+  | "PRINTING"
+  | "SHIPPED"
+  | "DELIVERED"
+  | "COMPLETED"
+  | "CANCELLED";
 
 export type PaymentStatus = "PENDING" | "PAID" | "REFUNDED";
 
@@ -19,6 +25,7 @@ export type ConsultationStatus =
 
 export interface Order {
   id: string;
+  orderNumber: string;
   customerName: string;
   phone: string;
   email: string;
@@ -92,10 +99,12 @@ export default function AdminOrdersPage() {
 
   const handleUpdateOrderStatus = async (id: string, newStatus: OrderStatus) => {
     try {
-      const res = await fetch(`/api/admin/orders/${id}`, {
-        method: "PUT",
+      const res = await fetch(`/api/admin/orders/${id}/status`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderStatus: newStatus }),
+        body: JSON.stringify({
+  status: newStatus,
+}),
       });
       if (res.ok) {
         setOrders(orders.map(o => o.id === id ? { ...o, orderStatus: newStatus } : o));
@@ -110,8 +119,8 @@ export default function AdminOrdersPage() {
 
   const handleUpdatePaymentStatus = async (id: string, newPaymentStatus: PaymentStatus) => {
     try {
-      const res = await fetch(`/api/admin/orders/${id}`, {
-        method: "PUT",
+      const res = await fetch(`/api/admin/orders/${id}/status`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paymentStatus: newPaymentStatus }),
       });
@@ -204,6 +213,7 @@ export default function AdminOrdersPage() {
     const matchesSearch = 
       o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.phone.includes(searchQuery) ||
+      o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.productName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "ALL" || o.orderStatus === statusFilter;
@@ -258,7 +268,7 @@ export default function AdminOrdersPage() {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C7A72]" />
           <input
             type="text"
-            placeholder="Search by customer name, phone, order ID..."
+            placeholder="Search by customer name, phone, order number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm focus:outline-none focus:border-[#C89A84]"
@@ -279,13 +289,14 @@ export default function AdminOrdersPage() {
             {activeTab === "orders" ? (
               <>
                 <option value="PENDING">Pending</option>
-                <option value="ACCEPTED">Accepted</option>
+                <option value="CONFIRMED">Confirmed</option>
                 <option value="DESIGNING">Designing</option>
-                <option value="IN_PRODUCTION">In Production</option>
-                <option value="READY_TO_DISPATCH">Ready to Dispatch</option>
+                <option value="PRINTING">In Production</option>
                 <option value="SHIPPED">Shipped</option>
-                <option value="DELIVERED">Delivered</option>
-                <option value="CANCELLED">Cancelled</option>
+                
+<option value="DELIVERED">Delivered</option>
+<option value="COMPLETED">Completed</option>
+<option value="CANCELLED">Cancelled</option>
               </>
             ) : (
               <>
@@ -322,7 +333,7 @@ export default function AdminOrdersPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#F9F6F2]/60 border-b border-[#EFE8E2] text-xs font-semibold text-[#6E625C] uppercase tracking-wider">
-                  <th className="py-4 px-6">Order ID</th>
+                  <th className="py-4 px-6">Order Number</th>
                   <th className="py-4 px-6">Customer</th>
                   <th className="py-4 px-6">Product</th>
                   <th className="py-4 px-6">Amount</th>
@@ -340,7 +351,7 @@ export default function AdminOrdersPage() {
                 ) : (
                   filteredOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-[#F9F6F2]/40 transition">
-                      <td className="py-4 px-6 font-semibold text-[#1F1816]">{order.id}</td>
+                      <td className="py-4 px-6 font-semibold text-[#1F1816]">{order.orderNumber}</td>
                       <td className="py-4 px-6">
                         <p className="font-medium text-[#1F1816]">{order.customerName}</p>
                         <p className="text-xs text-[#6E625C]">{order.phone}</p>
@@ -365,13 +376,14 @@ export default function AdminOrdersPage() {
                           className="bg-[#F9F6F2] border border-[#EFE8E2] px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#2C2320] focus:outline-none focus:border-[#C89A84]"
                         >
                           <option value="PENDING">Pending</option>
-                          <option value="ACCEPTED">Accepted</option>
+                          <option value="CONFIRMED">Confirmed</option>
                           <option value="DESIGNING">Designing</option>
-                          <option value="IN_PRODUCTION">In Production</option>
-                          <option value="READY_TO_DISPATCH">Ready to Dispatch</option>
+                          <option value="PRINTING">In Production</option>
                           <option value="SHIPPED">Shipped</option>
-                          <option value="DELIVERED">Delivered</option>
-                          <option value="CANCELLED">Cancelled</option>
+                          
+<option value="DELIVERED">Delivered</option>
+<option value="COMPLETED">Completed</option>
+<option value="CANCELLED">Cancelled</option>
                         </select>
                       </td>
                       <td className="py-4 px-6 text-xs text-[#6E625C]">{order.date}</td>
@@ -519,7 +531,7 @@ export default function AdminOrdersPage() {
                   >
                     <option value="PENDING">Pending</option>
                     <option value="PAID">Paid</option>
-                    <option value="REFUNDED">Refunded</option>
+                    <option value="FAILED">Failed</option>
                   </select>
                 </div>
               </div>
@@ -560,13 +572,14 @@ export default function AdminOrdersPage() {
                 className="w-full bg-white border border-[#EFE8E2] px-3 py-2 rounded-xl text-sm font-semibold text-[#1F1816]"
               >
                 <option value="PENDING">Pending</option>
-                <option value="ACCEPTED">Accepted</option>
+                <option value="CONFIRMED">Confirmed</option>
                 <option value="DESIGNING">Designing</option>
-                <option value="IN_PRODUCTION">In Production</option>
-                <option value="READY_TO_DISPATCH">Ready to Dispatch</option>
+                <option value="PRINTING">In Production</option>
                 <option value="SHIPPED">Shipped</option>
-                <option value="DELIVERED">Delivered</option>
-                <option value="CANCELLED">Cancelled</option>
+          
+<option value="DELIVERED">Delivered</option>
+<option value="COMPLETED">Completed</option>
+<option value="CANCELLED">Cancelled</option>
               </select>
             </div>
 

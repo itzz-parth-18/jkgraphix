@@ -163,9 +163,12 @@ model VerificationToken {
 
 enum OrderStatus {
   PENDING
-  IN_PRODUCTION
+  CONFIRMED
+  DESIGNING
+  PRINTING
   SHIPPED
   DELIVERED
+  COMPLETED
   CANCELLED
 }
 

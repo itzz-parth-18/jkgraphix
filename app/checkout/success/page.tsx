@@ -52,7 +52,7 @@ export default async function SuccessPage({
           </Link>
 
           <Link
-            href="/account/orders"
+            href="/customer/orders"
             className="rounded-xl bg-[#1F1816] px-6 py-3 text-white"
           >
             View Orders
