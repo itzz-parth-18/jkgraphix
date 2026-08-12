@@ -1,4 +1,4 @@
-import { Save, Store, CreditCard, MessageSquare } from "lucide-react";
+import { Save, Store, CreditCard, MessageSquare, Share2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
@@ -19,8 +19,8 @@ export default async function AdminSettingsPage() {
   async function saveSettings(formData: FormData) {
     "use server";
     
-    // Naye keys jo hum database mein save karenge (WhatsApp Number included)
-    const keys = ["STORE_NAME", "SUPPORT_EMAIL", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "WHATSAPP_NUMBER"];
+    // Naye keys jo hum database mein save karenge (Instagram, WhatsApp, Email included)
+    const keys = ["STORE_NAME", "SUPPORT_EMAIL", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "WHATSAPP_NUMBER", "INSTAGRAM_URL"];
     
     for (const key of keys) {
       const value = formData.get(key) as string;
@@ -66,6 +66,26 @@ export default async function AdminSettingsPage() {
                 type="email" 
                 name="SUPPORT_EMAIL" 
                 defaultValue={getSetting("SUPPORT_EMAIL") || "support@jkgraphix.com"} 
+                className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" 
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Social & Connect Links */}
+        <div className="bg-white border border-taupe-border rounded-2xl p-6 shadow-soft">
+          <div className="flex items-center gap-2 mb-4 border-b border-taupe-border/50 pb-4">
+            <Share2 className="w-5 h-5 text-rose" />
+            <h2 className="text-lg font-serif font-semibold text-espresso">Social Links & Connect</h2>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-espresso mb-1">Instagram URL</label>
+              <input 
+                type="url" 
+                name="INSTAGRAM_URL" 
+                defaultValue={getSetting("INSTAGRAM_URL") || "https://instagram.com"} 
+                placeholder="https://instagram.com/yourprofile" 
                 className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" 
               />
             </div>

@@ -2,19 +2,20 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Upload, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import CustomFieldsEditor from "@/components/admin/products/CustomFieldsEditor";
+import ImageUploader from "@/components/ImageUploader";
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]); // Categories list state
+  const [categories, setCategories] = useState<any[]>([]);
 
   const [name, setName] = useState("");
-  const [categoryId, setCategoryId] = useState(""); // Category ID state added
+  const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [sku, setSku] = useState("");
@@ -83,17 +84,6 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       console.error("Failed to fetch product", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -212,20 +202,21 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-[#6E625C] uppercase mb-1">Product Image (Choose File)</label>
-              <div className="flex items-center gap-3">
-                <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm text-[#6E625C] hover:bg-[#EFE8E2] cursor-pointer transition">
-                  <Upload className="w-4 h-4" />
-                  <span>Choose Image File</span>
-                  <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                </label>
+              <label className="block text-xs font-semibold text-[#6E625C] uppercase mb-1">Product Image</label>
+              <div className="space-y-3">
+                <ImageUploader 
+                  onUploadComplete={(url) => setImageUrl(url)} 
+                />
+                {imageUrl && (
+                  <div className="flex items-center gap-3 p-3 bg-white border border-[#EFE8E2] rounded-xl">
+                    <img src={imageUrl} alt="Preview" className="w-12 h-12 object-cover rounded-lg border border-[#EFE8E2]" />
+                    <div className="flex-1 truncate">
+                      <p className="text-xs font-medium text-emerald-700">Image uploaded successfully</p>
+                      <p className="text-xs text-[#6E625C] truncate">{imageUrl}</p>
+                    </div>
+                  </div>
+                )}
               </div>
-              {imageUrl && (
-                <div className="mt-2 flex items-center gap-3">
-                  <img src={imageUrl} alt="Preview" className="w-12 h-12 object-cover rounded-lg border border-[#EFE8E2]" />
-                  <span className="text-xs text-emerald-700 font-medium">Image uploaded successfully</span>
-                </div>
-              )}
             </div>
 
             <div className="md:col-span-2">

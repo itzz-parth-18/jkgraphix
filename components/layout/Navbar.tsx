@@ -1,13 +1,17 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, LogOut, User } from "lucide-react"; // NAYA: User icon add kiya
+import { ShoppingCart, LogOut, User } from "lucide-react";
 import { auth, signOut } from "@/lib/auth";
+import CartSync from "@/components/CartSync"; // Client component for syncing pending cart
 
 export default async function Navbar() {
   const session = await auth();
   
   return (
     <nav className="sticky top-0 z-40 border-b border-[#EFE8E2] bg-[#F9F6F2]/90 px-6 py-4 backdrop-blur-md">
+      {/* Background cart sync utility for un-authenticated to authenticated transition */}
+      {session && <CartSync />}
+
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Link
           href="/"
@@ -41,7 +45,6 @@ export default async function Navbar() {
 
           {session ? (
             <>
-              {/* NAYA: My Account Link */}
               <Link
                 href="/customer"
                 className="flex items-center gap-2 text-xs font-semibold text-[#2C2320] hover:text-[#C89A84] transition"

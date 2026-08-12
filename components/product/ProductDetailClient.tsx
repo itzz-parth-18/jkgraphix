@@ -32,7 +32,7 @@ export default function ProductDetailClient({
   const validateCustomFields = () => {
     const errors: string[] = [];
 
-    product.customFields.forEach((field: any) => {
+    product.customFields?.forEach((field: any) => {
       if (
         field.isRequired &&
         !customizationData[field.id]
@@ -73,14 +73,11 @@ export default function ProductDetailClient({
     }
   };
 
-  // Instant fast quantity update handler for cart drawer (+ and -)
   const handleUpdateQuantity = async (id: string, newQty: number) => {
-    // 1. Instant UI update
     setCartItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, quantity: newQty } : item))
     );
 
-    // 2. Background server sync
     try {
       await fetch("/api/cart", {
         method: "POST",
@@ -98,6 +95,11 @@ export default function ProductDetailClient({
     }
 
     try {
+      const finalCustomizations = {
+        ...customizationData,
+        customPhotoUrl: customizationData.photo_upload || customizationData.customPhotoUrl || "",
+      };
+
       const res = await fetch("/api/cart", {
         method: "POST",
         headers: {
@@ -106,12 +108,20 @@ export default function ProductDetailClient({
         body: JSON.stringify({
           productId: product.id,
           quantity,
-          customizations: customizationData,
+          customizations: finalCustomizations,
         }),
       });
 
+      // Agar user logged-in nahi hai (401 Unauthorized)
       if (res.status === 401) {
-        window.location.href = "/login?callbackUrl=/cart";
+        // Pending cart item ko localStorage mein save kar lo login ke baad add karne ke liye
+        localStorage.setItem("pending_cart_item", JSON.stringify({
+          productId: product.id,
+          quantity,
+          customizations: finalCustomizations,
+        }));
+        
+        window.location.href = "/login?callbackUrl=" + encodeURIComponent(window.location.pathname);
         return;
       }
 
@@ -147,10 +157,10 @@ export default function ProductDetailClient({
         
         {/* Gallery */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-cream-dark border border-taupe-border">
+          <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#F9F6F2] border border-[#EFE8E2]">
             <img src={selectedImage} alt={product.name} className="w-full h-full object-cover" />
-            <span className="absolute top-4 left-4 bg-cream/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-espresso flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-rose" /> Handcrafted
+            <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-[#1F1816] flex items-center gap-1 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-rose-500" /> Handcrafted
             </span>
           </div>
 
@@ -163,7 +173,7 @@ export default function ProductDetailClient({
                 key={idx}
                 onClick={() => setSelectedImage(img)}
                 className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition ${
-                  selectedImage === img ? "border-rose scale-95" : "border-transparent opacity-70 hover:opacity-100"
+                  selectedImage === img ? "border-[#C89A84] scale-95" : "border-transparent opacity-70 hover:opacity-100"
                 }`}
               >
                 <img src={img} alt="" className="w-full h-full object-cover" />
@@ -175,18 +185,18 @@ export default function ProductDetailClient({
         {/* Customization & Purchase */}
         <div className="lg:col-span-5 space-y-6">
           <div>
-            <p className="text-xs font-semibold tracking-wider text-rose uppercase">
+            <p className="text-xs font-semibold tracking-wider text-[#C89A84] uppercase">
               {isCR ? "Consultation Required" : "Personalized Collection"}
             </p>
-            <h1 className="text-3xl font-serif text-espresso font-semibold mt-1">{product.name}</h1>
-            <p className="text-sm text-taupe mt-2">{product.description}</p>
+            <h1 className="text-3xl font-serif text-[#1F1816] font-semibold mt-1">{product.name}</h1>
+            <p className="text-sm text-[#6E625C] mt-2">{product.description}</p>
             <div className="mt-4 flex items-baseline gap-3">
-              <span className="text-2xl font-serif font-bold text-espresso">₹{Number(product.basePrice).toFixed(2)}</span>
+              <span className="text-2xl font-serif font-bold text-[#1F1816]">₹{Number(product.basePrice).toFixed(2)}</span>
             </div>
           </div>
 
           <CustomizationEngine
-            fields={product.customFields}
+            fields={product.customFields || []}
             onChange={(data) => {
               setCustomizationData((prev) => ({
                 ...prev,
@@ -199,68 +209,74 @@ export default function ProductDetailClient({
             }}
           />
 
-          {/* Uploadthing Integration Box */}
-          <div className="space-y-2 pt-2 border-t border-taupe-border/60">
-            <label className="block text-sm font-medium text-espresso">
+          {/* Professional Uploadthing Integration Box */}
+          <div className="space-y-2 pt-2 border-t border-[#EFE8E2]">
+            <label className="block text-sm font-medium text-[#1F1816]">
               Upload High-Resolution Photo (Cloud)
             </label>
-            <div className="border border-dashed border-taupe-border rounded-xl p-4 bg-white flex flex-col items-center justify-center">
+            <div className="border-2 border-dashed border-[#EFE8E2] rounded-2xl p-5 bg-[#F9F6F2] flex flex-col items-center justify-center transition hover:border-[#C89A84]">
               {customizationData.photo_upload ? (
-                <div className="w-full flex items-center justify-between gap-3 bg-cream/50 p-2.5 rounded-xl border border-taupe-border">
+                <div className="w-full flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-[#EFE8E2]">
                   <div className="flex items-center gap-3 overflow-hidden">
                     <img
                       src={customizationData.photo_upload}
                       alt="Uploaded customer photo"
-                      className="w-14 h-14 object-cover rounded-lg border border-taupe-border flex-shrink-0"
+                      className="w-14 h-14 object-cover rounded-lg border border-[#EFE8E2] flex-shrink-0"
                     />
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Photo Attached
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Photo Attached Successfully
                       </p>
-                      <p className="text-[10px] text-taupe truncate mt-0.5 max-w-[180px]">
+                      <p className="text-[10px] text-[#6E625C] truncate mt-0.5 max-w-[180px]">
                         {customizationData.photo_upload}
                       </p>
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setCustomizationData((prev) => ({ ...prev, photo_upload: undefined }))}
-                    className="flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition flex-shrink-0"
+                    onClick={() => setCustomizationData((prev) => ({ ...prev, photo_upload: undefined, customPhotoUrl: undefined }))}
+                    className="flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 p-2 rounded-lg transition flex-shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" /> Remove
                   </button>
                 </div>
               ) : (
-                <div className="w-full py-2 flex flex-col items-center">
-                  <UploadButton<OurFileRouter, "customerPhotoUploader">
+                <div className="w-full flex flex-col items-center justify-center">
+                  <UploadButton<OurFileRouter, any>
                     endpoint="customerPhotoUploader"
+                    appearance={{
+                      button: "bg-[#1F1816] text-[#F9F6F2] font-medium text-xs px-6 py-2.5 rounded-xl hover:bg-[#322724] transition shadow-sm cursor-pointer ut-readying:bg-gray-400",
+                      container: "flex flex-col items-center justify-center gap-2 w-full",
+                      allowedContent: "text-xs text-[#6E625C] mt-1"
+                    }}
                     onClientUploadComplete={(res: any) => {
                       if (res && res[0]) {
-                        const url = res[0].ufsUrl;
+                        const url = res[0].ufsUrl || res[0].url;
                         if (url) {
                           setCustomizationData((prev) => ({
                             ...prev,
                             photo_upload: url,
+                            customPhotoUrl: url,
                           }));
                         }
                       }
                     }}
                     onUploadError={(error: Error) => {
-                      alert(`ERROR! ${error.message}`);
+                      alert(`Upload failed: ${error.message}`);
                     }}
                   />
-                  <span className="text-[11px] text-taupe mt-1">Supports PNG, JPG up to 4MB</span>
+                  <span className="text-[11px] text-[#6E625C] mt-2">Supports PNG, JPG up to 4MB (Progress bar included)</span>
                 </div>
               )}
             </div>
           </div>
 
           {isCR && (
-            <div className="space-y-2 pt-4 border-t border-taupe-border/60">
-              <label className="block text-sm font-medium text-espresso">
+            <div className="space-y-2 pt-4 border-t border-[#EFE8E2]">
+              <label className="block text-sm font-medium text-[#1F1816]">
                 WhatsApp Number <span className="text-red-500">*</span>
               </label>
-              <p className="text-xs text-taupe mb-2">Required for custom consultation before order processing.</p>
+              <p className="text-xs text-[#6E625C] mb-2">Required for custom consultation before order processing.</p>
               <input
                 type="tel"
                 value={whatsappNumber}
@@ -269,7 +285,7 @@ export default function ProductDetailClient({
                   if (validationErrors.length > 0) setValidationErrors([]);
                 }}
                 placeholder="+91 98765 43210"
-                className="w-full px-4 py-3 rounded-xl border border-taupe-border bg-white focus:outline-none focus:ring-2 focus:ring-[#C89A84] text-sm text-espresso"
+                className="w-full px-4 py-3 rounded-xl border border-[#EFE8E2] bg-white focus:outline-none focus:ring-2 focus:ring-[#C89A84] text-sm text-[#1F1816]"
               />
             </div>
           )}
@@ -289,15 +305,15 @@ export default function ProductDetailClient({
 
           <div className="space-y-4 pt-2">
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-4">
-              <div className="flex items-center border border-taupe-border rounded-xl bg-white px-3 py-2 shrink-0">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-2 font-bold text-taupe hover:text-espresso">-</button>
-                <span className="px-4 text-sm font-semibold text-espresso">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="px-2 font-bold text-taupe hover:text-espresso">+</button>
+              <div className="flex items-center border border-[#EFE8E2] rounded-xl bg-white px-3 py-2 shrink-0">
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-2 font-bold text-[#6E625C] hover:text-[#1F1816]">-</button>
+                <span className="px-4 text-sm font-semibold text-[#1F1816]">{quantity}</span>
+                <button onClick={() => setQuantity(quantity + 1)} className="px-2 font-bold text-[#6E625C] hover:text-[#1F1816]">+</button>
               </div>
 
               <button
                 onClick={handleAddToCart}
-                className="flex-1 w-full sm:w-auto bg-espresso hover:bg-espresso-hover text-cream py-3.5 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-soft transition active:scale-[0.99] whitespace-nowrap"
+                className="flex-1 w-full sm:w-auto bg-[#1F1816] hover:bg-[#322724] text-[#F9F6F2] py-3.5 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.99] whitespace-nowrap"
               >
                 <ShoppingBag className="w-4 h-4" />
                 Add to Cart — ₹{(Number(product.basePrice) * quantity).toFixed(2)}
@@ -316,9 +332,9 @@ export default function ProductDetailClient({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-taupe-border/60 text-xs text-taupe">
-              <div className="flex items-center gap-2"><Truck className="w-4 h-4 text-rose" /> Ships in 2–3 workshop days</div>
-              <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-sage" /> Quality guarantee</div>
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-[#EFE8E2] text-xs text-[#6E625C]">
+              <div className="flex items-center gap-2"><Truck className="w-4 h-4 text-amber-600" /> Ships in 2–3 workshop days</div>
+              <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-emerald-600" /> Quality guarantee</div>
             </div>
           </div>
         </div>
@@ -326,7 +342,7 @@ export default function ProductDetailClient({
 
       {relatedProducts.length > 0 && (
         <section className="mt-16">
-          <h2 className="mb-6 text-2xl font-serif font-semibold text-espresso">
+          <h2 className="mb-6 text-2xl font-serif font-semibold text-[#1F1816]">
             Related Products
           </h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -334,7 +350,7 @@ export default function ProductDetailClient({
               <a
                 key={item.id}
                 href={`/shop/${item.slug}`}
-                className="overflow-hidden rounded-2xl border border-taupe-border bg-white transition hover:shadow-lg"
+                className="overflow-hidden rounded-2xl border border-[#EFE8E2] bg-white transition hover:shadow-lg"
               >
                 <img
                   src={
@@ -345,10 +361,10 @@ export default function ProductDetailClient({
                   className="h-52 w-full object-cover"
                 />
                 <div className="p-4">
-                  <h3 className="line-clamp-2 font-medium text-espresso">
+                  <h3 className="line-clamp-2 font-medium text-[#1F1816]">
                     {item.name}
                   </h3>
-                  <p className="mt-2 text-lg font-semibold text-espresso">
+                  <p className="mt-2 text-lg font-semibold text-[#1F1816]">
                     ₹{Number(item.basePrice).toFixed(2)}
                   </p>
                 </div>
@@ -358,7 +374,6 @@ export default function ProductDetailClient({
         </section>
       )}
 
-      {/* Cart Drawer Component with onUpdateQuantity passed */}
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
