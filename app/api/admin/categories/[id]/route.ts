@@ -1,24 +1,28 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const body = await request.json().catch(() => ({ action: "delete_products" }));
-    const { action, reassignTargetId } = body;
+    const session = await auth();
+    if (!session || session.user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (action === "reassign" && reassignTargetId) {
-      await (prisma.product as any).updateMany({
-        where: { categoryId: id },
-        data: { categoryId: reassignTargetId },
-      });
-    } else {
-      await (prisma.product as any).deleteMany({
-        where: { categoryId: id },
-      });
+    const { id } = await params;
+
+    const productCount = await (prisma as any).product.count({
+      where: { categoryId: id }
+    }).catch(() => 0);
+
+    if (productCount > 0) {
+      return NextResponse.json(
+        { error: `Cannot delete. This category is used by ${productCount} product(s).` }, 
+        { status: 400 } 
+      );
     }
 
     await (prisma as any).category.delete({
@@ -37,6 +41,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session || session.user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
 
@@ -51,6 +60,7 @@ export async function PUT(
         isVisible: Boolean(body.isVisible),
         showOnHomepage: Boolean(body.showOnHomepage),
         isFeatured: Boolean(body.isFeatured),
+        type: body.type, // NAYA FIELD UPDATE KE LIYE
       },
     });
 

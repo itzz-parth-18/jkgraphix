@@ -31,7 +31,7 @@ export interface Product {
   price: number;
   shortDescription: string;
   fullDescription: string;
-  thumbnailUrl: string;
+  imageUrl: string;
   galleryUrls: string[];
   productType: ProductType;
   status: ProductStatus;
@@ -86,8 +86,13 @@ export default function AdminProductsPage() {
     if (!confirm("Are you sure you want to delete this product?")) return;
     try {
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+      const data = await res.json(); // Backend ka response read karo
+      
       if (res.ok) {
         setProducts(products.filter((p) => p.id !== id));
+      } else {
+        // ERROR ALERT: Ab backend ka safe-delete message yahan dikhega
+        alert(data.error || "Failed to delete product");
       }
     } catch (error) {
       alert("Failed to delete product");
@@ -196,8 +201,8 @@ export default function AdminProductsPage() {
                     <tr key={product.id} className="hover:bg-[#F9F6F2]/40 transition">
                       <td className="py-4 px-6">
                         <div className="h-12 w-12 rounded-xl bg-[#F9F6F2] border border-[#EFE8E2] overflow-hidden flex-shrink-0 relative">
-                          {product.thumbnailUrl ? (
-                            <img src={product.thumbnailUrl} alt={product.name} className="h-full w-full object-cover" />
+                          {product.imageUrl ? (
+                            <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
                           ) : (
                             <div className="flex items-center justify-center h-full text-[#8C7A72]"><ImageIcon className="w-5 h-5" /></div>
                           )}

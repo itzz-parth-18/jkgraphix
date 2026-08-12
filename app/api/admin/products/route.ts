@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
-// Helper function to generate a unique slug
 async function generateUniqueSlug(name: string): Promise<string> {
   const baseSlug = name
     .toLowerCase()
@@ -17,21 +17,20 @@ async function generateUniqueSlug(name: string): Promise<string> {
     const existing = await (prisma as any).product.findUnique({
       where: { slug },
     });
-
-    if (!existing) {
-      break;
-    }
-
+    if (!existing) break;
     counter++;
     slug = `${baseSlug}-${counter}`;
   }
-
   return slug;
 }
 
-// GET: Fetch all products cleanly matching existing Prisma schema
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session || session.user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const products = await (prisma as any).product.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -46,21 +45,18 @@ export async function GET() {
   }
 }
 
-// POST: Create a new product with auto-generated unique slug
 export async function POST(req: Request) {
   try {
+    const session = await auth();
+    if (!session || session.user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { 
-      name, 
-      description, 
-      basePrice, 
-      price, 
-      sku, 
-      imageUrl, 
-      thumbnailUrl, 
-      galleryUrls, 
-      fullDescription, 
-      shortDescription 
+      name, description, basePrice, price, sku, imageUrl, 
+      thumbnailUrl, galleryUrls, fullDescription, shortDescription, categoryId, status,
+      productType, isFeatured, showOnHomepage, isSeasonal
     } = body;
 
     if (!name) {
@@ -68,7 +64,6 @@ export async function POST(req: Request) {
     }
 
     const slug = await generateUniqueSlug(name);
-
     const finalPrice = basePrice !== undefined ? basePrice : (price !== undefined ? price : 0);
     const finalSku = sku || `SKU-${Date.now()}`;
     const finalImageUrl = thumbnailUrl || imageUrl || (Array.isArray(galleryUrls) ? galleryUrls[0] : null);
@@ -82,6 +77,13 @@ export async function POST(req: Request) {
         basePrice: finalPrice,
         sku: finalSku,
         imageUrl: finalImageUrl,
+        status: status || "PUBLISHED",
+        categoryId: categoryId || null,
+        productType: productType || "QUICK_CUSTOMIZE",
+        // Visibility Checkboxes Save
+        isFeatured: Boolean(isFeatured),
+        showOnHomepage: Boolean(showOnHomepage),
+        isSeasonal: Boolean(isSeasonal),
       },
     });
 

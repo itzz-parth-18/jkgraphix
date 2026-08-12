@@ -7,19 +7,44 @@ datasource db {
 }
 
 model Product {
-  id           String        @id @default(cuid())
-  name         String
-  slug         String        @unique
-  description  String
-  basePrice    Decimal       @db.Decimal(10, 2)
-  sku          String        @unique
-  imageUrl     String?
-  status       String        @default("PUBLISHED")
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  customFields CustomField[]
-  orderItems   OrderItem[]
-  cartItems    CartItem[]
+  id             String        @id @default(cuid())
+  name           String
+  slug           String        @unique
+  description    String?
+  basePrice        Float       @default(0)
+  sku            String?        @unique
+  imageUrl       String?
+  status         String        @default("PUBLISHED")
+  productType      ProductType @default(QUICK_CUSTOMIZE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  categoryId     String?
+  isFeatured     Boolean       @default(false)
+  isSeasonal     Boolean       @default(false)
+  showOnHomepage Boolean       @default(false)
+  cartItems      CartItem[]
+  customFields   CustomField[]
+  orderItems     OrderItem[]
+  category       Category?     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+}
+
+model Category {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  slug          String         @unique
+  description   String?
+  imageUrl      String?
+  status        CategoryStatus @default(ACTIVE)
+  displayOrder     Int            @default(0)
+  isVisible      Boolean     @default(true)
+  showOnHomepage Boolean     @default(true)
+  isFeatured     Boolean     @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  serviceTypeId String?
+  ServiceType   ServiceType?    @relation(fields: [serviceTypeId], references: [id])
+  type ProductType @default(QUICK_CUSTOMIZE)
+  products      Product[]
 }
 
 model CustomField {
@@ -34,66 +59,62 @@ model CustomField {
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  orderNumber     String      @unique
-  status          OrderStatus @default(PENDING)
-  paymentStatus PaymentStatus @default(PENDING)
-  customerName    String
-  customerEmail   String
-  userId          String?
-  customerPhone   String?
-  shippingAddress String
-  addressLine1 String?
-  addressLine2 String?
-  city      String?
-  state     String?
-  pinCode   String?
-  country   String?
-  subtotal        Decimal     @db.Decimal(10, 2)
-  shippingCost    Decimal     @db.Decimal(10, 2)
-  totalAmount     Decimal     @db.Decimal(10, 2)
+  id                String        @id @default(cuid())
+  orderNumber       String        @unique
+  status            OrderStatus   @default(PENDING)
+  customerName      String
+  customerEmail     String
+  userId            String?
+  customerPhone     String?
+  shippingAddress   String
+  subtotal          Decimal       @db.Decimal(10, 2)
+  shippingCost      Decimal       @db.Decimal(10, 2)
+  totalAmount       Decimal       @db.Decimal(10, 2)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  addressLine1      String?
+  addressLine2      String?
+  city              String?
+  country           String?
+  paymentStatus     PaymentStatus @default(PENDING)
+  pinCode           String?
   razorpayOrderId   String?
   razorpayPaymentId String?
   razorpaySignature String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  user            User?       @relation(fields: [userId], references: [id])
-  items           OrderItem[]
+  state             String?
+  user              User?         @relation(fields: [userId], references: [id])
+  items             OrderItem[]
 }
 
 model OrderItem {
   id             String  @id @default(cuid())
   orderId        String
   productId      String
-  productName  String
-  productImage String?
   quantity       Int     @default(1)
   unitPrice      Decimal @db.Decimal(10, 2)
   customizations Json?
+  productImage   String?
+  productName    String
   order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product        Product @relation(fields: [productId], references: [id])
 }
 
 model Cart {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  fullName    String?
-  phone       String?
-  email       String?
-
+  id           String     @id @default(cuid())
+  userId       String     @unique
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
   addressLine1 String?
   addressLine2 String?
-
-  city      String?
-  state     String?
-  pinCode   String?
-  country   String?
-
-  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items CartItem[]
+  city         String?
+  country      String?
+  email        String?
+  fullName     String?
+  phone        String?
+  pinCode      String?
+  state        String?
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items        CartItem[]
 }
 
 model CartItem {
@@ -103,9 +124,8 @@ model CartItem {
   quantity       Int      @default(1)
   customizations Json?
   createdAt      DateTime @default(now())
-
-  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cart           Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([cartId])
 }
@@ -117,14 +137,14 @@ model User {
   emailVerified DateTime?
   password      String?
   image         String?
-  phone         String?
   role          Role      @default(CUSTOMER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  phone         String?
   accounts      Account[]
+  cart          Cart?
   orders        Order[]
   sessions      Session[]
-  cart          Cart?
 }
 
 model Account {
@@ -161,6 +181,19 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model ServiceType {
+  id          String            @id
+  name        String            @unique
+  slug        String            @unique
+  description String?
+  imageUrl    String?
+  status      ServiceTypeStatus @default(ACTIVE)
+  sortOrder   Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime
+  Category    Category[]
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -189,4 +222,28 @@ enum PaymentStatus {
   PENDING
   PAID
   FAILED
+}
+
+enum CategoryStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ServiceTypeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique 
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ProductType {
+  QUICK_CUSTOMIZE
+  DESIGN_CONSULTATION
 }

@@ -1,17 +1,37 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, ShoppingBag, Package, Settings, LogOut, Sparkles } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
+// Naye icons (Tags, Users) add kiye hain lucide-react se
+import { LayoutDashboard, ShoppingBag, Package, Settings, LogOut, Sparkles, Tags, Users } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  
+  // Session nikalna taaki check kar sakein kaun login hai
+  const { data: session, status } = useSession();
+
+  // SECURITY CHECK: Agar normal customer hai ya unauthenticated hai, toh redirect kar do
+  useEffect(() => {
+    if (status === "loading") return;
+    if (pathname === "/admin/login") return;
+
+    if (!session || session?.user?.role !== "ADMIN") {
+      router.push("/"); // Ya agar aap chaho toh "/admin/login" par bhi bhej sakte ho
+    }
+  }, [session, status, pathname, router]);
 
   // Login page par sidebar nahi dikhana hai
   if (pathname === "/admin/login") {
     return <>{children}</>;
+  }
+
+  // Jab tak session verify ho raha hai, tab tak page load hone do (UI flash rokne ke liye)
+  if (status === "loading" || (!session && pathname !== "/admin/login")) {
+    return <div className="flex h-screen items-center justify-center bg-cream-dark text-espresso">Loading...</div>;
   }
 
   return (
@@ -33,19 +53,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/products" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${pathname === "/admin/products" ? "bg-rose text-white" : "hover:bg-white/10"}`}>
             <Package className="w-5 h-5" /> Products
           </Link>
+          
+          {/* NAYE LINKS: Categories aur Customers */}
+          <Link href="/admin/categories" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${pathname === "/admin/categories" ? "bg-rose text-white" : "hover:bg-white/10"}`}>
+            <Tags className="w-5 h-5" /> Categories
+          </Link>
+          <Link href="/admin/customers" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${pathname === "/admin/customers" ? "bg-rose text-white" : "hover:bg-white/10"}`}>
+            <Users className="w-5 h-5" /> Customers
+          </Link>
+
           <Link href="/admin/settings" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${pathname === "/admin/settings" ? "bg-rose text-white" : "hover:bg-white/10"}`}>
             <Settings className="w-5 h-5" /> Settings
           </Link>
         </nav>
 
         <div className="p-4 border-t border-white/10">
-  <button 
-    onClick={() => signOut({ callbackUrl: "/admin/login" })}
-    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 text-taupe transition-colors"
-  >
-    <LogOut className="w-5 h-5" /> Sign Out
-  </button>
-</div>
+          <button 
+            onClick={() => signOut({ callbackUrl: "/admin/login" })}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 text-taupe transition-colors"
+          >
+            <LogOut className="w-5 h-5" /> Sign Out
+          </button>
+        </div>
       </div>
 
       {/* Main Content Area */}

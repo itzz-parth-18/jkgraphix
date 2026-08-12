@@ -1,12 +1,9 @@
-// ==========================================
-// Category Management Page
-// Location: app/admin/categories/page.tsx
-// ==========================================
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { Plus, Edit3, Trash2, Eye, EyeOff, Image as ImageIcon } from "lucide-react";
+
+export type ProductType = "QUICK_CUSTOMIZE" | "DESIGN_CONSULTATION";
 
 export interface Category {
   id: string;
@@ -18,6 +15,7 @@ export interface Category {
   isVisible: boolean;
   showOnHomepage: boolean;
   isFeatured: boolean;
+  type: ProductType; // NAYA FIELD
   productCount?: number;
 }
 
@@ -36,6 +34,7 @@ export default function AdminCategoriesPage() {
   const [isVisible, setIsVisible] = useState(true);
   const [showOnHomepage, setShowOnHomepage] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
+  const [type, setType] = useState<ProductType>("QUICK_CUSTOMIZE"); // NAYA STATE
 
   useEffect(() => {
     fetchCategories();
@@ -66,6 +65,7 @@ export default function AdminCategoriesPage() {
       setIsVisible(cat.isVisible);
       setShowOnHomepage(cat.showOnHomepage);
       setIsFeatured(cat.isFeatured);
+      setType(cat.type || "QUICK_CUSTOMIZE");
     } else {
       setEditingCategory(null);
       setName("");
@@ -76,6 +76,7 @@ export default function AdminCategoriesPage() {
       setIsVisible(true);
       setShowOnHomepage(true);
       setIsFeatured(false);
+      setType("QUICK_CUSTOMIZE");
     }
     setIsModalOpen(true);
   };
@@ -91,6 +92,7 @@ export default function AdminCategoriesPage() {
       isVisible,
       showOnHomepage,
       isFeatured,
+      type, // NAYA FIELD BACKEND KO BHEJ RAHE HAIN
     };
 
     try {
@@ -118,8 +120,12 @@ export default function AdminCategoriesPage() {
     if (!confirm("Are you sure you want to delete this category?")) return;
     try {
       const res = await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      
       if (res.ok) {
         setCategories(categories.filter((c) => c.id !== id));
+      } else {
+        alert(data.error || "Failed to delete category");
       }
     } catch (error) {
       alert("Failed to delete category");
@@ -163,8 +169,7 @@ export default function AdminCategoriesPage() {
               <tr className="bg-[#F9F6F2]/60 border-b border-[#EFE8E2] text-xs font-semibold text-[#6E625C] uppercase tracking-wider">
                 <th className="py-4 px-6">Image</th>
                 <th className="py-4 px-6">Category Name</th>
-                <th className="py-4 px-6">Slug</th>
-                <th className="py-4 px-6">Display Order</th>
+                <th className="py-4 px-6">Type</th>
                 <th className="py-4 px-6">Visibility</th>
                 <th className="py-4 px-6">Products</th>
                 <th className="py-4 px-6 text-right">Actions</th>
@@ -172,9 +177,9 @@ export default function AdminCategoriesPage() {
             </thead>
             <tbody className="divide-y divide-[#EFE8E2] text-sm">
               {loading ? (
-                <tr><td colSpan={7} className="py-12 text-center text-[#6E625C]">Loading categories...</td></tr>
+                <tr><td colSpan={6} className="py-12 text-center text-[#6E625C]">Loading categories...</td></tr>
               ) : categories.length === 0 ? (
-                <tr><td colSpan={7} className="py-12 text-center text-[#6E625C]">No categories found. Create your first category.</td></tr>
+                <tr><td colSpan={6} className="py-12 text-center text-[#6E625C]">No categories found. Create your first category.</td></tr>
               ) : (
                 categories.map((cat) => (
                   <tr key={cat.id} className="hover:bg-[#F9F6F2]/40 transition">
@@ -188,8 +193,16 @@ export default function AdminCategoriesPage() {
                       </div>
                     </td>
                     <td className="py-4 px-6 font-semibold text-[#1F1816]">{cat.name}</td>
-                    <td className="py-4 px-6 text-xs text-[#6E625C] font-mono">{cat.slug}</td>
-                    <td className="py-4 px-6 font-medium text-[#2C2320]">{cat.displayOrder}</td>
+                    
+                    {/* NAYA COLUMN: Category Type Display */}
+                    <td className="py-4 px-6">
+                       <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
+                         cat.type === "QUICK_CUSTOMIZE" ? "bg-amber-50 text-amber-800" : "bg-purple-50 text-purple-800"
+                       }`}>
+                         {cat.type === "QUICK_CUSTOMIZE" ? "Quick Customize" : "Consultation"}
+                       </span>
+                    </td>
+
                     <td className="py-4 px-6">
                       <button onClick={() => toggleVisibility(cat)} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition ${cat.isVisible ? 'bg-emerald-50 text-emerald-800' : 'bg-gray-100 text-gray-600'}`}>
                         {cat.isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -219,6 +232,20 @@ export default function AdminCategoriesPage() {
               <button onClick={() => setIsModalOpen(false)} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#F9F6F2] hover:bg-[#EFE8E2] text-[#6E625C]">Close</button>
             </div>
             <form onSubmit={handleSave} className="space-y-4">
+              
+              {/* NAYA DROPDOWN: Category Type */}
+              <div>
+                <label className="block text-xs font-semibold text-[#6E625C] uppercase mb-1">Category Type</label>
+                <select 
+                  value={type} 
+                  onChange={(e) => setType(e.target.value as ProductType)}
+                  className="w-full px-3 py-2 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm focus:outline-none focus:border-[#C89A84]"
+                >
+                  <option value="QUICK_CUSTOMIZE">Quick Customize (Direct Checkout)</option>
+                  <option value="DESIGN_CONSULTATION">Design Consultation (WhatsApp/DM)</option>
+                </select>
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-[#6E625C] uppercase mb-1">Category Name</label>
                 <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm focus:outline-none focus:border-[#C89A84]" placeholder="e.g. Memory Boxes" />

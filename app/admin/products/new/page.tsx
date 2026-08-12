@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Upload, Image as ImageIcon, X } from "lucide-react";
@@ -8,10 +8,11 @@ import { ArrowLeft, Upload, Image as ImageIcon, X } from "lucide-react";
 export default function AddProductPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]); // NAYA STATE CATEGORIES KE LIYE
 
   const [formData, setFormData] = useState({
     name: "",
-    category: "Memory Boxes",
+    categoryId: "", // 'category' string ki jagah 'categoryId' use karenge
     price: 0,
     shortDescription: "",
     fullDescription: "",
@@ -29,6 +30,26 @@ export default function AddProductPage() {
     showOnHomepage: false,
     isSeasonal: false,
   });
+
+  // NAYA FUNCTION: Database se categories fetch karne ke liye
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/admin/categories");
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+          // Agar categories available hain, toh pehli category ko default set kar do
+          if (data.length > 0) {
+            setFormData((prev) => ({ ...prev, categoryId: data[0].id }));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load categories", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -122,14 +143,17 @@ export default function AddProductPage() {
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Category</label>
               <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                 className="w-full px-4 py-2.5 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm focus:outline-none focus:border-[#C89A84]"
               >
-                <option value="Memory Boxes">Memory Boxes</option>
-                <option value="Engraved Frames">Engraved Frames</option>
-                <option value="Custom Acrylics">Custom Acrylics</option>
-                <option value="Heirloom Journals">Heirloom Journals</option>
+                <option value="">Select a Category</option>
+                {/* NAYA LOOP: Asli categories dikhane ke liye */}
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

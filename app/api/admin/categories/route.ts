@@ -1,13 +1,14 @@
-// ==========================================
-// 3. Categories API Route
-// Location: app/api/admin/categories/route.ts
-// ==========================================
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session || session.user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const categories = await (prisma as any).category.findMany({
       include: { _count: { select: { products: true } } },
       orderBy: { displayOrder: "asc" },
@@ -26,6 +27,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+    if (!session || session.user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const newCategory = await (prisma as any).category.create({
       data: {
@@ -37,6 +43,7 @@ export async function POST(request: Request) {
         isVisible: Boolean(body.isVisible),
         showOnHomepage: Boolean(body.showOnHomepage),
         isFeatured: Boolean(body.isFeatured),
+        type: body.type || "QUICK_CUSTOMIZE", // NAYA FIELD
       },
     });
 

@@ -1,9 +1,40 @@
-"use client";
-
 import React from "react";
 import { Save, Store, CreditCard } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function AdminSettingsPage() {
+export default async function AdminSettingsPage() {
+  // Security Check
+  const session = await auth();
+  if (!session || session.user.role !== "ADMIN") {
+    redirect("/");
+  }
+
+  // Database se current settings fetch karna
+  const settings = await prisma.setting.findMany();
+  const getSetting = (key: string) => settings.find((s: any) => s.key === key)?.value || "";
+  // Form submit hone par save karne ka Server Action
+  async function saveSettings(formData: FormData) {
+    "use server";
+    
+    // Naye keys jo hum database mein save karenge
+    const keys = ["STORE_NAME", "SUPPORT_EMAIL", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"];
+    
+    for (const key of keys) {
+      const value = formData.get(key) as string;
+      if (value !== null) {
+        await prisma.setting.upsert({
+          where: { key },
+          update: { value },
+          create: { key, value }
+        });
+      }
+    }
+    revalidatePath("/admin/settings"); // Page ko refresh/update karna
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-8">
@@ -11,7 +42,9 @@ export default function AdminSettingsPage() {
         <p className="text-sm text-taupe mt-1">Configure your workshop details and payment methods.</p>
       </div>
 
-      <div className="space-y-6">
+      {/* Wrapping the entire content in a form that triggers saveSettings */}
+      <form action={saveSettings} className="space-y-6">
+        
         {/* General Settings */}
         <div className="bg-white border border-taupe-border rounded-2xl p-6 shadow-soft">
           <div className="flex items-center gap-2 mb-4 border-b border-taupe-border/50 pb-4">
@@ -21,11 +54,21 @@ export default function AdminSettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-espresso mb-1">Store Name</label>
-              <input type="text" defaultValue="JK Graphix" className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" />
+              <input 
+                type="text" 
+                name="STORE_NAME" // Added name attribute
+                defaultValue={getSetting("STORE_NAME") || "JK Graphix"} 
+                className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" 
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-espresso mb-1">Support Email</label>
-              <input type="email" defaultValue="support@lumierecrafts.com" className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" />
+              <input 
+                type="email" 
+                name="SUPPORT_EMAIL" // Added name attribute
+                defaultValue={getSetting("SUPPORT_EMAIL") || "support@lumierecrafts.com"} 
+                className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" 
+              />
             </div>
           </div>
         </div>
@@ -39,22 +82,37 @@ export default function AdminSettingsPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-espresso mb-1">Razorpay Key ID</label>
-              <input type="password" placeholder="rzp_test_..." className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" />
+              <input 
+                type="password" 
+                name="RAZORPAY_KEY_ID" // Added name attribute
+                defaultValue={getSetting("RAZORPAY_KEY_ID")} 
+                placeholder="rzp_test_..." 
+                className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" 
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-espresso mb-1">Razorpay Key Secret</label>
-              <input type="password" placeholder="••••••••••••••••" className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" />
+              <input 
+                type="password" 
+                name="RAZORPAY_KEY_SECRET" // Added name attribute
+                defaultValue={getSetting("RAZORPAY_KEY_SECRET")} 
+                placeholder="••••••••••••••••" 
+                className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" 
+              />
             </div>
           </div>
         </div>
 
         {/* Action Button */}
         <div className="flex justify-end">
-          <button className="flex items-center gap-2 bg-espresso text-cream px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-espresso-hover transition shadow-sm">
+          <button 
+            type="submit" // Ensure type is submit
+            className="flex items-center gap-2 bg-espresso text-cream px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-espresso-hover transition shadow-sm"
+          >
             <Save className="w-4 h-4" /> Save Settings
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

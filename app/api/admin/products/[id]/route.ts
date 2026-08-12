@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await auth();
+    if (!session || session.user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await req.json();
 
@@ -10,7 +16,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     const finalPrice = basePrice !== undefined && basePrice !== "" ? Number(basePrice) : (price !== undefined && price !== "" ? Number(price) : 0);
 
-    // Normalize status to match standard uppercase database values
     let finalStatus = "PUBLISHED";
     if (status) {
       const upperStatus = status.toString().toUpperCase();
@@ -25,6 +30,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (finalPrice !== undefined) updateData.basePrice = finalPrice;
     if (sku !== undefined) updateData.sku = sku;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+    
+    if (body.productType !== undefined) updateData.productType = body.productType; 
+    
+    // Visibility Checkboxes Save Logic
+    if (body.isFeatured !== undefined) updateData.isFeatured = Boolean(body.isFeatured);
+    if (body.showOnHomepage !== undefined) updateData.showOnHomepage = Boolean(body.showOnHomepage);
+    if (body.isSeasonal !== undefined) updateData.isSeasonal = Boolean(body.isSeasonal);
+    
     updateData.status = finalStatus;
 
     const updatedProduct = await (prisma as any).product.update({
@@ -41,7 +54,24 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await auth();
+    if (!session || session.user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
+
+    const orderCount = await (prisma as any).orderItem.count({
+      where: { productId: id }
+    }).catch(() => 0);
+
+    if (orderCount > 0) {
+      return NextResponse.json(
+        { error: `Cannot delete! This product is linked to ${orderCount} customer order(s). Please change its status to 'OUT_OF_STOCK' or 'DRAFT' instead.` }, 
+        { status: 400 }
+      );
+    }
+
     await (prisma as any).product.delete({
       where: { id },
     });
