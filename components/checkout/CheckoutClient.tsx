@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
 import ShippingForm from "./ShippingForm";
 import OrderSummary from "./OrderSummary";
 
@@ -12,8 +11,16 @@ type Props = {
 export default function CheckoutClient({
   cart,
 }: Props) {
-  const [shippingSaved, setShippingSaved] =
-    useState(false);
+  const [shippingSaved, setShippingSaved] = useState(false);
+  const [prefilledWhatsapp, setPrefilledWhatsapp] = useState("");
+
+  // Product page se save kiya hua WhatsApp number fetch kar rahe hain
+  useEffect(() => {
+    const savedNumber = localStorage.getItem("checkout_whatsapp");
+    if (savedNumber) {
+      setPrefilledWhatsapp(savedNumber);
+    }
+  }, []);
 
   return (
     <div className="grid gap-8 lg:grid-cols-3">

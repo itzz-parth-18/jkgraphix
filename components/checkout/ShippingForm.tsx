@@ -37,9 +37,7 @@ export default function ShippingForm({
   });
 
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
-
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
@@ -47,6 +45,15 @@ export default function ShippingForm({
       setForm((prev) => ({
         ...prev,
         email: session.user.email!,
+      }));
+    }
+
+    // NAYA: Product page se save kiya hua WhatsApp number yahan auto-fill ho jayega!
+    const savedWhatsapp = localStorage.getItem("checkout_whatsapp");
+    if (savedWhatsapp) {
+      setForm((prev) => ({
+        ...prev,
+        phone: savedWhatsapp,
       }));
     }
   }, [session]);
@@ -167,7 +174,7 @@ export default function ShippingForm({
           name: "fullName",
         },
         {
-          label: "Phone Number",
+          label: "Phone Number (WhatsApp)",
           name: "phone",
         },
         {

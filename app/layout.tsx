@@ -7,6 +7,7 @@ import { ourFileRouter } from "@/app/api/uploadthing/core";
 import Footer from "@/components/Footer";
 import AuthSessionProvider from "@/components/providers/SessionProvider";
 import Script from "next/script";
+import WhatsAppFloat from "@/components/layout/WhatsAppFloat"; // Naya WhatsApp floating button import kiya
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,6 +61,10 @@ export default function RootLayout({
             routerConfig={extractRouterConfig(ourFileRouter)}
           />
         </AuthSessionProvider>
+
+        {/* Global Floating WhatsApp Button */}
+        <WhatsAppFloat />
+
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
           strategy="afterInteractive"

@@ -38,7 +38,13 @@ export async function GET() {
       },
     }).catch(() => []);
 
-    return NextResponse.json(products, { status: 200 });
+    // FIX: Har product object me 'price' property map kar rahe hain taaki frontend par ₹0 ki problem na aaye
+    const formattedProducts = products.map((p: any) => ({
+      ...p,
+      price: p.basePrice ?? p.price ?? 0, // basePrice ko price map kar diya
+    }));
+
+    return NextResponse.json(formattedProducts, { status: 200 });
   } catch (error: any) {
     console.error("Error fetching products:", error);
     return NextResponse.json([], { status: 200 });
@@ -64,7 +70,8 @@ export async function POST(req: Request) {
     }
 
     const slug = await generateUniqueSlug(name);
-    const finalPrice = basePrice !== undefined ? basePrice : (price !== undefined ? price : 0);
+    // Dono (basePrice ya price) me se jo bhi aaye usko properly number me convert karo
+    const finalPrice = Number(basePrice !== undefined ? basePrice : (price !== undefined ? price : 0));
     const finalSku = sku || `SKU-${Date.now()}`;
     const finalImageUrl = thumbnailUrl || imageUrl || (Array.isArray(galleryUrls) ? galleryUrls[0] : null);
     const finalDesc = fullDescription || description || shortDescription || name;
@@ -74,13 +81,12 @@ export async function POST(req: Request) {
         name,
         slug,
         description: finalDesc,
-        basePrice: finalPrice,
+        basePrice: finalPrice, // Database column
         sku: finalSku,
         imageUrl: finalImageUrl,
         status: status || "PUBLISHED",
         categoryId: categoryId || null,
         productType: productType || "QUICK_CUSTOMIZE",
-        // Visibility Checkboxes Save
         isFeatured: Boolean(isFeatured),
         showOnHomepage: Boolean(showOnHomepage),
         isSeasonal: Boolean(isSeasonal),

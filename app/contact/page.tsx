@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ContactClient from "@/components/contact/ContactClient";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -11,6 +12,31 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ContactPage() {
-  return <ContactClient />;
+export default async function ContactPage() {
+  // Database se dynamic support email aur whatsapp/phone fetch karna
+  let supportEmail = "support@jkgraphix.com";
+  let whatsappNumber = "919999999999";
+
+  try {
+    const settings = await prisma.setting.findMany({
+      where: {
+        key: { in: ["SUPPORT_EMAIL", "WHATSAPP_NUMBER"] },
+      },
+    });
+
+    const emailSetting = settings.find((s) => s.key === "SUPPORT_EMAIL");
+    if (emailSetting?.value) supportEmail = emailSetting.value;
+
+    const whatsappSetting = settings.find((s) => s.key === "WHATSAPP_NUMBER");
+    if (whatsappSetting?.value) whatsappNumber = whatsappSetting.value;
+  } catch (error) {
+    console.error("Failed to fetch contact settings", error);
+  }
+
+  return (
+    <ContactClient 
+      supportEmail={supportEmail} 
+      whatsappNumber={whatsappNumber} 
+    />
+  );
 }

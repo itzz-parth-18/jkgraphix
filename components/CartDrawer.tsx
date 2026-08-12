@@ -1,13 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { X, ShoppingBag, Trash2, ArrowRight } from "lucide-react";
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
 
 export type CartItem = {
   id: string;
@@ -24,127 +18,27 @@ interface CartDrawerProps {
   onClose: () => void;
   items: CartItem[];
   onRemoveItem: (id: string) => void;
+  onUpdateQuantity?: (id: string, newQty: number) => void;
 }
-
-const loadRazorpayScript = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (typeof window !== "undefined" && window.Razorpay) {
-      return resolve(true);
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
 
 export default function CartDrawer({
   isOpen,
   onClose,
   items,
   onRemoveItem,
+  onUpdateQuantity,
 }: CartDrawerProps) {
-  const [loading, setLoading] = useState(false);
-
   if (!isOpen) return null;
 
-  const subtotal = items.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
+  const subtotal = items.reduce((acc, item) => {
+    const itemPrice = Number(item.price ?? (item as any).basePrice ?? 0);
+    const itemQty = Number(item.quantity ?? 1);
+    return acc + (isNaN(itemPrice) ? 0 : itemPrice) * (isNaN(itemQty) ? 1 : itemQty);
+  }, 0);
 
-  const handleProceedToCheckout = async () => {
+  const handleProceedToCheckout = () => {
     if (items.length === 0) return;
-
-    setLoading(true);
-    try {
-      const isLoaded = await loadRazorpayScript();
-      if (!isLoaded) {
-        alert("Failed to load Razorpay SDK.");
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            productId: item.productId || item.id,
-            name: item.name,
-            basePrice: item.price,
-            quantity: item.quantity,
-            imageUrl: item.image,
-            customizations: item.customizations || {},
-          })),
-          customerName: "Parth",
-          customerEmail: "parth@example.com",
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.razorpayOrderId) {
-        alert(data.error || "Order initialization failed!");
-        setLoading(false);
-        return;
-      }
-
-      const options = {
-        key: data.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: data.amount,
-        currency: data.currency || "INR",
-        name: "JK Graphix",
-        description: "Customized Keepsake Order",
-        order_id: data.razorpayOrderId,
-        handler: async function (response: {
-          razorpay_payment_id: string;
-          razorpay_order_id: string;
-          razorpay_signature: string;
-        }) {
-          try {
-            const verifyRes = await fetch("/api/verify-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                dbOrderId: data.dbOrderId,
-              }),
-            });
-
-            const verifyData = await verifyRes.json().catch(() => null);
-
-            if (verifyRes.ok && verifyData?.success) {
-              window.location.href = `/shop/order-success?order_id=${data.dbOrderId || ""}&payment_id=${response.razorpay_payment_id}`;
-            } else {
-              alert("Verification Failed: " + (verifyData?.error || `HTTP Status ${verifyRes.status}`));
-            }
-          } catch (verifyError: any) {
-            console.error("Verification Error:", verifyError);
-            alert("Verification Error: " + verifyError.message);
-          }
-        },
-        prefill: {
-          name: "Parth",
-          email: "parth@example.com",
-        },
-        theme: {
-          color: "#1c1917",
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err: any) {
-      console.error("Checkout failed:", err);
-      alert("Something went wrong with checkout.");
-    } finally {
-      setLoading(false);
-    }
+    window.location.href = "/checkout";
   };
 
   return (
@@ -174,7 +68,7 @@ export default function CartDrawer({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {items.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-3">
                 <ShoppingBag className="w-12 h-12 text-taupe-light" />
@@ -183,36 +77,66 @@ export default function CartDrawer({
                 </p>
               </div>
             ) : (
-              items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex gap-4 p-4 bg-white border border-taupe-border/60 rounded-xl"
-                >
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-20 h-20 object-cover rounded-lg border border-taupe-border/40"
-                  />
+              items.map((item) => {
+                const itemPrice = Number(item.price ?? (item as any).basePrice ?? 0);
+                return (
+                  <div
+                    key={item.id}
+                    className="flex gap-4 p-4 bg-white border border-taupe-border/60 rounded-xl items-center"
+                  >
+                    <img
+                      src={item.image || "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500&auto=format&fit=crop&q=60"}
+                      alt={item.name}
+                      className="w-16 h-16 object-cover rounded-lg border border-taupe-border/40 shrink-0"
+                    />
 
-                  <div className="flex-1 space-y-1">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-serif font-medium text-sm text-espresso line-clamp-1">
-                        {item.name}
-                      </h4>
-                      <button
-                        onClick={() => onRemoveItem(item.id)}
-                        className="text-taupe-light hover:text-red-500 transition ml-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="flex-1 space-y-1 min-w-0">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-serif font-medium text-sm text-espresso truncate">
+                          {item.name}
+                        </h4>
+                        <button
+                          onClick={() => onRemoveItem(item.id)}
+                          className="text-taupe-light hover:text-red-500 transition ml-2 shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <p className="text-xs font-semibold text-espresso">
+                        ₹{itemPrice.toFixed(2)}
+                      </p>
+
+                      {/* Super Fast Quantity + and - controls */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <div className="inline-flex items-center border border-taupe-border rounded-lg bg-cream/30 px-2 py-0.5">
+                          <button
+                            onClick={() => {
+                              if (onUpdateQuantity && item.quantity > 1) {
+                                onUpdateQuantity(item.id, item.quantity - 1);
+                              }
+                            }}
+                            className="px-1.5 text-xs font-bold text-taupe hover:text-espresso cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <span className="px-2 text-xs font-semibold text-espresso">{item.quantity}</span>
+                          <button
+                            onClick={() => {
+                              if (onUpdateQuantity) {
+                                onUpdateQuantity(item.id, item.quantity + 1);
+                              }
+                            }}
+                            className="px-1.5 text-xs font-bold text-taupe hover:text-espresso cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
                     </div>
-
-                    <p className="text-xs font-semibold text-espresso">
-                      ₹{item.price.toFixed(2)} × {item.quantity}
-                    </p>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
@@ -233,10 +157,9 @@ export default function CartDrawer({
 
               <button
                 onClick={handleProceedToCheckout}
-                disabled={loading}
-                className="w-full bg-espresso hover:bg-espresso-hover text-cream py-3.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-soft transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-espresso hover:bg-espresso-hover text-cream py-3.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-soft transition active:scale-[0.99] cursor-pointer"
               >
-                {loading ? "Processing..." : "Proceed to Checkout"}
+                Proceed to Checkout
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

@@ -51,6 +51,7 @@ export default async function ProductPage({ params }: Props) {
       slug,
     },
     include: {
+      category: true, // NAYA: Include category taaki hume type pata chale
       customFields: {
         orderBy: {
           sortOrder: "asc",
@@ -79,6 +80,7 @@ export default async function ProductPage({ params }: Props) {
   const serializedProduct = {
     ...product,
     basePrice: Number(product.basePrice),
+    productType: product.category?.type || "QUICK_CUSTOMIZE", // NAYA: Type Client component bhej rahe hain
   };
 
   const serializedRelatedProducts = relatedProducts.map((item: any) => ({

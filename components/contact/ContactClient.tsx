@@ -4,7 +4,12 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 
-export default function ContactClient() {
+type Props = {
+  supportEmail: string;
+  whatsappNumber: string;
+};
+
+export default function ContactClient({ supportEmail, whatsappNumber }: Props) {
   const [isPending, startTransition] = useTransition();
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -67,12 +72,14 @@ export default function ContactClient() {
 
             <div className="space-y-8">
               <div>
-                <h3 className="font-bold text-[#1F1816] text-lg mb-1">Phone Number</h3>
-                <p className="text-[#6E625C]">Support line available via workshop hours.</p>
+                <h3 className="font-bold text-[#1F1816] text-lg mb-1">Phone / WhatsApp Number</h3>
+                {/* Database se aane wala dynamic WhatsApp/Phone number */}
+                <p className="text-[#6E625C]">+{whatsappNumber}</p>
               </div>
               <div>
                 <h3 className="font-bold text-[#1F1816] text-lg mb-1">E-Mail</h3>
-                <p className="text-[#6E625C]">support@jkgraphix.com</p>
+                {/* Database se aane wala dynamic Support Email */}
+                <p className="text-[#6E625C]">{supportEmail}</p>
               </div>
             </div>
           </div>

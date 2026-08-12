@@ -1,5 +1,5 @@
 // ==========================================
-// Product Management Page (Fixed Import Error)
+// Product Management Page (Fixed TypeScript Error)
 // Location: app/admin/products/page.tsx
 // ==========================================
 
@@ -29,6 +29,7 @@ export interface Product {
   category?: CategoryModel;
   categoryName?: string;
   price: number;
+  basePrice?: number; // Added basePrice here to fix TS error
   shortDescription: string;
   fullDescription: string;
   imageUrl: string;
@@ -86,12 +87,11 @@ export default function AdminProductsPage() {
     if (!confirm("Are you sure you want to delete this product?")) return;
     try {
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
-      const data = await res.json(); // Backend ka response read karo
+      const data = await res.json();
       
       if (res.ok) {
         setProducts(products.filter((p) => p.id !== id));
       } else {
-        // ERROR ALERT: Ab backend ka safe-delete message yahan dikhega
         alert(data.error || "Failed to delete product");
       }
     } catch (error) {
@@ -213,7 +213,7 @@ export default function AdminProductsPage() {
                         <p className="text-xs text-[#6E625C] line-clamp-1">{product.shortDescription}</p>
                       </td>
                       <td className="py-4 px-6 font-medium text-[#2C2320]">{displayCategory}</td>
-                      <td className="py-4 px-6 font-medium text-[#1F1816]">₹{(product.price || 0).toLocaleString("en-IN")}</td>
+                      <td className="py-4 px-6 font-medium text-[#1F1816]">₹{(product.basePrice ?? product.price ?? 0).toLocaleString("en-IN")}</td>
                       <td className="py-4 px-6">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
                           product.productType === "QUICK_CUSTOMIZE" ? "bg-amber-50 text-amber-800" : "bg-purple-50 text-purple-800"

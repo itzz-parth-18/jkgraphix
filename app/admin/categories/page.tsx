@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit3, Trash2, Eye, EyeOff, Image as ImageIcon } from "lucide-react";
+import { Plus, Edit3, Trash2, Eye, EyeOff, Image as ImageIcon, Star, Home, Upload, X } from "lucide-react";
 
 export type ProductType = "QUICK_CUSTOMIZE" | "DESIGN_CONSULTATION";
 
@@ -15,7 +15,7 @@ export interface Category {
   isVisible: boolean;
   showOnHomepage: boolean;
   isFeatured: boolean;
-  type: ProductType; // NAYA FIELD
+  type: ProductType;
   productCount?: number;
 }
 
@@ -25,16 +25,15 @@ export default function AdminCategoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-  // Form State
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [displayOrder, setDisplayOrder] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
-  const [showOnHomepage, setShowOnHomepage] = useState(true);
+  const [showOnHomepage, setShowOnHomepage] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
-  const [type, setType] = useState<ProductType>("QUICK_CUSTOMIZE"); // NAYA STATE
+  const [type, setType] = useState<ProductType>("QUICK_CUSTOMIZE");
 
   useEffect(() => {
     fetchCategories();
@@ -74,11 +73,23 @@ export default function AdminCategoriesPage() {
       setImageUrl("");
       setDisplayOrder(categories.length);
       setIsVisible(true);
-      setShowOnHomepage(true);
+      setShowOnHomepage(false);
       setIsFeatured(false);
       setType("QUICK_CUSTOMIZE");
     }
     setIsModalOpen(true);
+  };
+
+  // Image File Handler (Jaise products me tha)
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -92,7 +103,7 @@ export default function AdminCategoriesPage() {
       isVisible,
       showOnHomepage,
       isFeatured,
-      type, // NAYA FIELD BACKEND KO BHEJ RAHE HAIN
+      type,
     };
 
     try {
@@ -171,15 +182,16 @@ export default function AdminCategoriesPage() {
                 <th className="py-4 px-6">Category Name</th>
                 <th className="py-4 px-6">Type</th>
                 <th className="py-4 px-6">Visibility</th>
+                <th className="py-4 px-6">Homepage / Status</th>
                 <th className="py-4 px-6">Products</th>
                 <th className="py-4 px-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EFE8E2] text-sm">
               {loading ? (
-                <tr><td colSpan={6} className="py-12 text-center text-[#6E625C]">Loading categories...</td></tr>
+                <tr><td colSpan={7} className="py-12 text-center text-[#6E625C]">Loading categories...</td></tr>
               ) : categories.length === 0 ? (
-                <tr><td colSpan={6} className="py-12 text-center text-[#6E625C]">No categories found. Create your first category.</td></tr>
+                <tr><td colSpan={7} className="py-12 text-center text-[#6E625C]">No categories found. Create your first category.</td></tr>
               ) : (
                 categories.map((cat) => (
                   <tr key={cat.id} className="hover:bg-[#F9F6F2]/40 transition">
@@ -194,7 +206,6 @@ export default function AdminCategoriesPage() {
                     </td>
                     <td className="py-4 px-6 font-semibold text-[#1F1816]">{cat.name}</td>
                     
-                    {/* NAYA COLUMN: Category Type Display */}
                     <td className="py-4 px-6">
                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
                          cat.type === "QUICK_CUSTOMIZE" ? "bg-amber-50 text-amber-800" : "bg-purple-50 text-purple-800"
@@ -209,6 +220,25 @@ export default function AdminCategoriesPage() {
                         {cat.isVisible ? "Visible" : "Hidden"}
                       </button>
                     </td>
+
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        {cat.showOnHomepage && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                            <Home className="w-3 h-3" /> Homepage
+                          </span>
+                        )}
+                        {cat.isFeatured && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                            <Star className="w-3 h-3" /> Featured
+                          </span>
+                        )}
+                        {!cat.showOnHomepage && !cat.isFeatured && (
+                          <span className="text-xs text-gray-400 italic">Standard</span>
+                        )}
+                      </div>
+                    </td>
+
                     <td className="py-4 px-6 font-medium text-[#2C2320]">{cat.productCount || 0} Products</td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -233,7 +263,6 @@ export default function AdminCategoriesPage() {
             </div>
             <form onSubmit={handleSave} className="space-y-4">
               
-              {/* NAYA DROPDOWN: Category Type */}
               <div>
                 <label className="block text-xs font-semibold text-[#6E625C] uppercase mb-1">Category Type</label>
                 <select 
@@ -258,10 +287,25 @@ export default function AdminCategoriesPage() {
                 <label className="block text-xs font-semibold text-[#6E625C] uppercase mb-1">Description</label>
                 <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-3 py-2 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm focus:outline-none focus:border-[#C89A84]" placeholder="Brief category description..." />
               </div>
+
+              {/* IMAGE UPLOAD FILE BUTTON & PREVIEW (URL input hata diya gaya hai) */}
               <div>
-                <label className="block text-xs font-semibold text-[#6E625C] uppercase mb-1">Category Image URL</label>
-                <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className="w-full px-3 py-2 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm focus:outline-none focus:border-[#C89A84]" placeholder="https://..." />
+                <label className="block text-xs font-semibold text-[#6E625C] uppercase mb-1">Category Image</label>
+                <div className="flex items-center gap-3">
+                  <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm text-[#6E625C] hover:bg-[#EFE8E2] cursor-pointer transition">
+                    <Upload className="w-4 h-4" />
+                    <span>Choose Image File</span>
+                    <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                  </label>
+                </div>
+                {imageUrl && (
+                  <div className="mt-2 flex items-center gap-3">
+                    <img src={imageUrl} alt="Preview" className="w-12 h-12 object-cover rounded-lg border border-[#EFE8E2]" />
+                    <span className="text-xs text-emerald-700 font-medium">Image attached successfully</span>
+                  </div>
+                )}
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#6E625C] uppercase mb-1">Display Order</label>
@@ -273,6 +317,9 @@ export default function AdminCategoriesPage() {
                   </label>
                   <label className="flex items-center gap-2 text-sm font-medium text-[#2C2320]">
                     <input type="checkbox" checked={showOnHomepage} onChange={(e) => setShowOnHomepage(e.target.checked)} className="rounded text-[#1F1816] focus:ring-[#C89A84]" /> Show on Homepage
+                  </label>
+                  <label className="flex items-center gap-2 text-sm font-medium text-[#2C2320]">
+                    <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="rounded text-[#1F1816] focus:ring-[#C89A84]" /> Featured Category
                   </label>
                 </div>
               </div>

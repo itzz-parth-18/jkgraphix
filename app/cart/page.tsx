@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 
 import CartList from "@/components/cart/CartList";
@@ -17,6 +17,9 @@ export default function CartPage() {
 
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Ref to hold pending debounce timers for fast quantity updates
+  const debounceTimers = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
   useEffect(() => {
     document.title = "Shopping Cart | JK Graphix";
@@ -26,43 +29,74 @@ export default function CartPage() {
   async function fetchCart() {
     try {
       const res = await fetch("/api/cart");
-
       if (!res.ok) {
         setCart(null);
         return;
       }
-
       const data = await res.json();
-
       setCart(data);
     } finally {
       setLoading(false);
     }
   }
 
-  async function updateQuantity(
-    itemId: string,
-    quantity: number
-  ) {
-    await fetch(`/api/cart/${itemId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        quantity,
-      }),
+  // Blazing Fast Optimistic Update with Debounced Background Sync
+  function updateQuantity(itemId: string, newQuantity: number) {
+    if (newQuantity < 1) return;
+
+    // 1. Immediately update UI state locally (0ms lag)
+    setCart((prevCart) => {
+      if (!prevCart) return null;
+      return {
+        ...prevCart,
+        items: prevCart.items.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        ),
+      };
     });
 
-    fetchCart();
+    // 2. Clear existing timer for this specific item if clicked rapidly
+    if (debounceTimers.current[itemId]) {
+      clearTimeout(debounceTimers.current[itemId]);
+    }
+
+    // 3. Debounce backend synchronization (syncs after user stops clicking for 400ms)
+    debounceTimers.current[itemId] = setTimeout(async () => {
+      try {
+        await fetch(`/api/cart/${itemId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            quantity: newQuantity,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to sync quantity to server", error);
+        fetchCart(); // Revert on failure
+      }
+    }, 400);
   }
 
   async function removeItem(itemId: string) {
-    await fetch(`/api/cart/${itemId}`, {
-      method: "DELETE",
+    // Optimistic remove from UI
+    setCart((prevCart) => {
+      if (!prevCart) return null;
+      return {
+        ...prevCart,
+        items: prevCart.items.filter((item) => item.id !== itemId),
+      };
     });
 
-    fetchCart();
+    try {
+      await fetch(`/api/cart/${itemId}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Failed to remove item", error);
+      fetchCart();
+    }
   }
 
   const items = cart?.items ?? [];
@@ -75,7 +109,7 @@ export default function CartPage() {
   const total = items.reduce(
     (sum, item) =>
       sum +
-      Number(item.product.basePrice) * item.quantity,
+      Number(item.product?.basePrice ?? item.price ?? 0) * item.quantity,
     0
   );
 
