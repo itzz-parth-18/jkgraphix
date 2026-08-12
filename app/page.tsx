@@ -8,7 +8,7 @@ import HowItWorks from "@/components/homepage/HowItWorks";
 import Testimonials from "@/components/homepage/Testimonials";
 import PortfolioPreview from "@/components/homepage/PortfolioPreview";
 import CallToAction from "@/components/homepage/CallToAction";
-import InstagramGallery from "@/components/homepage/InstagramGallery";
+
 
 
 export default function HomePage() {
@@ -37,7 +37,7 @@ export default function HomePage() {
 
      <PortfolioPreview />
 
-     <InstagramGallery /> 
+      
     
       </main>
 
