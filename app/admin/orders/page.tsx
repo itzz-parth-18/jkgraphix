@@ -31,7 +31,7 @@ export interface Order {
   email: string;
   address: string;
   productName: string;
-  category: string;
+  category: string | { name?: string };
   amount: number;
   paymentMethod: string;
   paymentStatus: PaymentStatus;
@@ -53,7 +53,7 @@ export interface Consultation {
   phone: string;
   email: string;
   productName: string;
-  category: string;
+  category: string | { name?: string };
   description: string;
   referenceImages: string[];
   budget?: string;
@@ -102,9 +102,7 @@ export default function AdminOrdersPage() {
       const res = await fetch(`/api/admin/orders/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-  status: newStatus,
-}),
+        body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
         setOrders(orders.map(o => o.id === id ? { ...o, orderStatus: newStatus } : o));
@@ -232,6 +230,13 @@ export default function AdminOrdersPage() {
     return matchesSearch && matchesStatus;
   });
 
+  // Helper to extract category name safely
+  const getCategoryName = (category: string | { name?: string } | undefined) => {
+    if (!category) return "";
+    if (typeof category === "string") return category;
+    return category.name || "";
+  };
+
   return (
     <div className="space-y-8 p-6 md:p-8 bg-[#F9F6F2] min-h-screen text-[#2C2320]">
       {/* Header */}
@@ -293,10 +298,9 @@ export default function AdminOrdersPage() {
                 <option value="DESIGNING">Designing</option>
                 <option value="PRINTING">In Production</option>
                 <option value="SHIPPED">Shipped</option>
-                
-<option value="DELIVERED">Delivered</option>
-<option value="COMPLETED">Completed</option>
-<option value="CANCELLED">Cancelled</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
               </>
             ) : (
               <>
@@ -358,7 +362,7 @@ export default function AdminOrdersPage() {
                       </td>
                       <td className="py-4 px-6">
                         <p className="font-medium text-[#2C2320]">{order.productName}</p>
-                        <p className="text-xs text-[#6E625C]">{order.category}</p>
+                        <p className="text-xs text-[#6E625C]">{getCategoryName(order.category)}</p>
                       </td>
                       <td className="py-4 px-6 font-semibold text-[#1F1816]">₹{order.amount.toLocaleString("en-IN")}</td>
                       <td className="py-4 px-6">
@@ -380,10 +384,9 @@ export default function AdminOrdersPage() {
                           <option value="DESIGNING">Designing</option>
                           <option value="PRINTING">In Production</option>
                           <option value="SHIPPED">Shipped</option>
-                          
-<option value="DELIVERED">Delivered</option>
-<option value="COMPLETED">Completed</option>
-<option value="CANCELLED">Cancelled</option>
+                          <option value="DELIVERED">Delivered</option>
+                          <option value="COMPLETED">Completed</option>
+                          <option value="CANCELLED">Cancelled</option>
                         </select>
                       </td>
                       <td className="py-4 px-6 text-xs text-[#6E625C]">{order.date}</td>
@@ -441,7 +444,7 @@ export default function AdminOrdersPage() {
                       </td>
                       <td className="py-4 px-6">
                         <p className="font-medium text-[#2C2320]">{consult.productName}</p>
-                        <p className="text-xs text-[#6E625C]">{consult.category}</p>
+                        <p className="text-xs text-[#6E625C]">{getCategoryName(consult.category)}</p>
                       </td>
                       <td className="py-4 px-6">
                         <select
@@ -520,7 +523,7 @@ export default function AdminOrdersPage() {
               <h4 className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Product & Payment</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div><span className="text-[#6E625C] text-xs">Product:</span> <p className="font-semibold text-[#1F1816]">{selectedOrder.productName}</p></div>
-                <div><span className="text-[#6E625C] text-xs">Category:</span> <p className="font-semibold text-[#1F1816]">{selectedOrder.category}</p></div>
+                <div><span className="text-[#6E625C] text-xs">Category:</span> <p className="font-semibold text-[#1F1816]">{getCategoryName(selectedOrder.category)}</p></div>
                 <div><span className="text-[#6E625C] text-xs">Amount:</span> <p className="font-semibold text-[#1F1816]">₹{selectedOrder.amount.toLocaleString("en-IN")}</p></div>
                 <div>
                   <span className="text-[#6E625C] text-xs">Payment Status:</span>
@@ -576,10 +579,9 @@ export default function AdminOrdersPage() {
                 <option value="DESIGNING">Designing</option>
                 <option value="PRINTING">In Production</option>
                 <option value="SHIPPED">Shipped</option>
-          
-<option value="DELIVERED">Delivered</option>
-<option value="COMPLETED">Completed</option>
-<option value="CANCELLED">Cancelled</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
 
@@ -600,7 +602,7 @@ export default function AdminOrdersPage() {
               <div className="flex gap-2 pt-2">
                 <input
                   type="text"
-                  placeholder="Add internal note (e.g. Waiting for final photo)..."
+                  placeholder="Add internal note..."
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
                   className="w-full px-3 py-2 bg-white border border-[#F3E5DC] rounded-xl text-xs focus:outline-none focus:border-[#C89A84]"
@@ -648,7 +650,7 @@ export default function AdminOrdersPage() {
             <div className="space-y-3 bg-[#F9F6F2]/50 p-4 rounded-xl border border-[#EFE8E2]">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Project Details</h4>
               <div className="space-y-2 text-sm">
-                <div><span className="text-[#6E625C] text-xs">Product Interest:</span> <p className="font-semibold text-[#1F1816]">{selectedConsultation.productName} ({selectedConsultation.category})</p></div>
+                <div><span className="text-[#6E625C] text-xs">Product Interest:</span> <p className="font-semibold text-[#1F1816]">{selectedConsultation.productName} ({getCategoryName(selectedConsultation.category)})</p></div>
                 <div><span className="text-[#6E625C] text-xs">Description:</span> <p className="text-[#2C2320]">{selectedConsultation.description}</p></div>
                 {selectedConsultation.budget && <div><span className="text-[#6E625C] text-xs">Budget:</span> <p className="font-semibold text-[#1F1816]">{selectedConsultation.budget}</p></div>}
                 {selectedConsultation.preferredDeliveryDate && <div><span className="text-[#6E625C] text-xs">Preferred Date:</span> <p className="font-semibold text-[#1F1816]">{selectedConsultation.preferredDeliveryDate}</p></div>}

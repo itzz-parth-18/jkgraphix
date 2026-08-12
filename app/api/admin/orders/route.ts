@@ -9,7 +9,11 @@ export async function GET() {
       include: {
         items: {
           include: {
-            product: true,
+            product: {
+              include: {
+                category: true, // Category relation ko include kiya hai
+              },
+            },
           },
         },
       },
@@ -32,6 +36,13 @@ export async function GET() {
         photos = [customData.photo];
       }
 
+      // Asli category nikalne ka logic (object ya string dono ke liye safe)
+      const productCategory = item.product?.category;
+      const categoryName = 
+        typeof productCategory === "string" 
+          ? productCategory 
+          : productCategory?.name || "Uncategorized";
+
       return {
         id: order.id,
         orderNumber: order.orderNumber,
@@ -40,7 +51,7 @@ export async function GET() {
         email: order.customerEmail || "—",
         address: order.shippingAddress || "—",
         productName: item.product?.name || "Custom Product",
-        category: "Memory Boxes",
+        category: categoryName, // <-- Ab yahan asli category aayegi!
         amount: Number(order.totalAmount) || 0,
         paymentMethod: "Online",
         paymentStatus: "PAID",
