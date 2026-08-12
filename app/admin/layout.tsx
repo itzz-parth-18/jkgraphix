@@ -3,8 +3,8 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ShoppingBag, Package, Settings, LogOut, Sparkles, Tags, Users, MessageSquare } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
+import { LayoutDashboard, ShoppingBag, Package, Settings, LogOut, Sparkles, Tags, Users, MessageSquare, Briefcase } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -60,6 +60,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/inquiries" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${pathname === "/admin/inquiries" ? "bg-rose text-white" : "hover:bg-white/10"}`}>
             <MessageSquare className="w-5 h-5" /> Inquiries
           </Link>
+
+          <Link href="/admin/portfolio" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${pathname === "/admin/portfolio" ? "bg-rose text-white" : "hover:bg-white/10"}`}>
+  <Briefcase className="w-5 h-5" /> Portfolio
+</Link>
 
           <Link href="/admin/settings" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${pathname === "/admin/settings" ? "bg-rose text-white" : "hover:bg-white/10"}`}>
             <Settings className="w-5 h-5" /> Settings

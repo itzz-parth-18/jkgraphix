@@ -10,6 +10,7 @@ import PortfolioPreview from "@/components/homepage/PortfolioPreview";
 import CallToAction from "@/components/homepage/CallToAction";
 import InstagramGallery from "@/components/homepage/InstagramGallery";
 
+
 export default function HomePage() {
   
 

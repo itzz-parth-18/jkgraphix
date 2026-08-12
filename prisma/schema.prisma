@@ -255,3 +255,15 @@ model ContactInquiry {
   message   String
   createdAt DateTime @default(now())
 }
+
+
+model PortfolioItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String
+  imageUrl    String
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
