@@ -247,3 +247,11 @@ enum ProductType {
   QUICK_CUSTOMIZE
   DESIGN_CONSULTATION
 }
+
+model ContactInquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}

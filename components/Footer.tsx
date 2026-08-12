@@ -17,7 +17,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-sm text-[#A3958E] leading-relaxed max-w-sm">
-              Crafting Memories, One Gift at a Time. Premium personalized heirlooms and custom keepsakes designed to last generations.
+              Custom Perfection, Tailored to Your Vision. Premium personalized heirlooms and custom keepsakes designed to last generations.
             </p>
           </div>
 
@@ -34,10 +34,11 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className="font-serif text-lg font-semibold tracking-wide text-white">Customer Support</h3>
             <ul className="space-y-3 text-sm">
+              {/* YAHA LINKS THEEK KAR DIYE GAYE HAIN */}
               <li><Link href="/shipping" className="text-[#A3958E] hover:text-[#C89A84] transition-colors">Shipping Policy</Link></li>
-              <li><Link href="/shipping" className="text-[#A3958E] hover:text-[#C89A84] transition-colors">Refund Policy</Link></li>
+              <li><Link href="/refund" className="text-[#A3958E] hover:text-[#C89A84] transition-colors">Refund Policy</Link></li>
               <li><Link href="/privacy" className="text-[#A3958E] hover:text-[#C89A84] transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/privacy" className="text-[#A3958E] hover:text-[#C89A84] transition-colors">Terms & Conditions</Link></li>
+              <li><Link href="/terms" className="text-[#A3958E] hover:text-[#C89A84] transition-colors">Terms & Conditions</Link></li>
             </ul>
           </div>
 
