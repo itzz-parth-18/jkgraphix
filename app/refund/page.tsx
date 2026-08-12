@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { ArrowLeft, RefreshCcw, XCircle, AlertCircle, CreditCard, Camera } from "lucide-react";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Refund & Cancellation Policy | JK Graphix",
-  description: "Read our policies regarding order cancellations, replacements, and refunds for customized products.",
+export const metadata: Metadata = {
+  title: "Refund & Cancellation Policy",
+  description: "Read our policies regarding order cancellations, replacements, and refunds for customized products at JK Graphix.",
+  openGraph: {
+    title: "Refund & Cancellation Policy | JK Graphix",
+    description: "Read our policies regarding order cancellations, replacements, and refunds for customized products at JK Graphix.",
+    url: "/refund",
+  },
 };
 
 export default function RefundPolicyPage() {

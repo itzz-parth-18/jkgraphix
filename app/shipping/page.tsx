@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { ArrowLeft, Clock, AlertTriangle, Truck, CheckCircle2, Info, Mail } from "lucide-react";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Shipping & Delivery Policy | JK Graphix",
-  description: "Learn about JK Graphix shipping methods, dispatch timelines, and delivery policies.",
+export const metadata: Metadata = {
+  title: "Shipping & Delivery Policy",
+  description: "Learn about JK Graphix shipping methods, dispatch timelines, and delivery policies across India.",
+  openGraph: {
+    title: "Shipping & Delivery Policy | JK Graphix",
+    description: "Learn about JK Graphix shipping methods, dispatch timelines, and delivery policies across India.",
+    url: "/shipping",
+  },
 };
 
 export default function ShippingPage() {

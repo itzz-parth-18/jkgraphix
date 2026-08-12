@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Terms & Conditions | JK Graphix",
+export const metadata: Metadata = {
+  title: "Terms & Conditions",
   description: "Read the terms and conditions for using JK Graphix services and ordering custom products.",
+  openGraph: {
+    title: "Terms & Conditions | JK Graphix",
+    description: "Read the terms and conditions for using JK Graphix services and ordering custom products.",
+    url: "/terms",
+  },
 };
 
 export default function TermsPage() {

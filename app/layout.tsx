@@ -19,8 +19,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JK Graphix — Personalized Keepsakes",
-  description: "Handcrafted custom gifts and laser-engraved memory boxes.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://jkgraphix.com'),
+  title: {
+    default: "JK Graphix — Custom Printing & Design Solutions",
+    template: "%s | JK Graphix",
+  },
+  description: "Professional custom printing, business branding, and design solutions by JK Graphix.",
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: "/",
+    siteName: "JK Graphix",
+    title: "JK Graphix — Custom Printing & Design Solutions",
+    description: "Professional custom printing, business branding, and design solutions.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "JK Graphix — Custom Printing & Design Solutions",
+    description: "Professional custom printing, business branding, and design solutions.",
+  },
 };
 
 export default function RootLayout({
@@ -34,21 +51,20 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col justify-between">
-  <AuthSessionProvider>
-    <div className="flex-grow">{children}</div>
+        <AuthSessionProvider>
+          <div className="flex-grow">{children}</div>
 
-    <Footer />
+          <Footer />
 
-
-    <NextSSRPlugin
-      routerConfig={extractRouterConfig(ourFileRouter)}
-    />
-  </AuthSessionProvider>
-  <Script
-  src="https://checkout.razorpay.com/v1/checkout.js"
-  strategy="afterInteractive"
-/>
-</body>
+          <NextSSRPlugin
+            routerConfig={extractRouterConfig(ourFileRouter)}
+          />
+        </AuthSessionProvider>
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="afterInteractive"
+        />
+      </body>
     </html>
   );
 }

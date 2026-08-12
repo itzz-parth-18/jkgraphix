@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "FAQ | JK Graphix",
-  description: "Frequently asked questions about ordering, customization, and shipping.",
+export const metadata: Metadata = {
+  title: "Frequently Asked Questions",
+  description: "Find answers regarding custom orders, personalization options, and processing times at JK Graphix.",
+  openGraph: {
+    title: "Frequently Asked Questions | JK Graphix",
+    description: "Find answers regarding custom orders, personalization options, and processing times at JK Graphix.",
+    url: "/faq",
+  },
 };
 
 const faqs = [
@@ -30,8 +36,25 @@ const faqs = [
 ];
 
 export default function FAQPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map((faq) => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer,
+      },
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-[#F9F6F2] text-[#2C2320] flex flex-col">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <nav className="sticky top-0 z-40 bg-[#F9F6F2]/90 backdrop-blur-md border-b border-[#EFE8E2] px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="font-serif text-xl font-bold tracking-tight text-[#1F1816] flex items-center gap-3">

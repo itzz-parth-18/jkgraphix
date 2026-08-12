@@ -1,6 +1,15 @@
 import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import AccountCard from "@/components/account/AccountCard";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "My Account",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function AccountPage() {
   const session = await auth();

@@ -1,9 +1,17 @@
-
 import Navbar from "@/components/layout/Navbar";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import CheckoutClient from "@/components/checkout/CheckoutClient";
 import { getCart } from "@/lib/cart";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Secure Checkout",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function CheckoutPage() {
 

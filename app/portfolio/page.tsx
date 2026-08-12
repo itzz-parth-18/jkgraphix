@@ -1,10 +1,16 @@
 import Link from "next/link";
 import { ArrowLeft, Briefcase } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Our Portfolio | JK Graphix",
-  description: "Explore our past custom printing, design, and gifting projects.",
+export const metadata: Metadata = {
+  title: "Our Portfolio & Showcase",
+  description: "Explore our past custom printing, design, and gifting projects crafted with precision by JK Graphix.",
+  openGraph: {
+    title: "Our Portfolio & Showcase | JK Graphix",
+    description: "Explore our past custom printing, design, and gifting projects crafted with precision by JK Graphix.",
+    url: "/portfolio",
+  },
 };
 
 interface PortfolioItem {

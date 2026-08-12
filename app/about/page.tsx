@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { ArrowLeft, Camera, Sparkles, Gift, ArrowRight } from "lucide-react";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "About Us | JK Graphix",
-  description: "Learn about JK Graphix's journey in crafting personalized memories and custom keepsakes.",
+  description: "Learn about JK Graphix's journey in crafting personalized memories and custom keepsakes with precision and passion.",
+  openGraph: {
+    title: "About Us | JK Graphix",
+    description: "Learn about JK Graphix's journey in crafting personalized memories and custom keepsakes with precision and passion.",
+    url: "/about",
+  },
 };
 
 export default function AboutPage() {

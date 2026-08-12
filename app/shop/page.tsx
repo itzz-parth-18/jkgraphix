@@ -1,11 +1,22 @@
 import Navbar from "@/components/layout/Navbar";
 import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
 
 import ShopHeader from "@/components/shop/ShopHeader";
 import ShopControls from "@/components/shop/ShopControls";
 import ProductGrid from "@/components/shop/ProductGrid";
 import EmptyState from "@/components/shop/EmptyState";
 import Pagination from "@/components/shop/Pagination";
+
+export const metadata: Metadata = {
+  title: "Shop Custom Printing & Keepsakes",
+  description: "Browse our collection of personalized keepsakes, custom memory boxes, and bespoke business printing solutions.",
+  openGraph: {
+    title: "Shop Custom Printing & Keepsakes | JK Graphix",
+    description: "Browse our collection of personalized keepsakes, custom memory boxes, and bespoke business printing solutions.",
+    url: "/shop",
+  },
+};
 
 type SearchParams = {
   search?: string;
@@ -111,7 +122,7 @@ export default async function ShopPage({ searchParams }: Props) {
   const categories = ["Memory Boxes"];
 
   return (
-        <div className="min-h-screen bg-[#F9F6F2]">
+    <div className="min-h-screen bg-[#F9F6F2]">
       <Navbar />
 
       <main className="mx-auto max-w-7xl px-6 py-12">
