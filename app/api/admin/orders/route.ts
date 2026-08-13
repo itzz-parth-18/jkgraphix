@@ -1,17 +1,30 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// GET: Fetch all incoming orders cleanly
+// GET: Fetch active orders for admin
 export async function GET() {
   try {
+    const session = await auth();
+
+    if (!session?.user?.id || session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 }
+      );
+    }
+
     const dbOrders = await prisma.order.findMany({
+      where: {
+        adminDeletedAt: null,
+      },
       orderBy: { createdAt: "desc" },
       include: {
         items: {
           include: {
             product: {
               include: {
-                category: true, // Category relation ko include kiya hai
+                category: true,
               },
             },
           },
@@ -36,11 +49,11 @@ export async function GET() {
         photos = [customData.photo];
       }
 
-      // Asli category nikalne ka logic (object ya string dono ke liye safe)
       const productCategory = item.product?.category;
-      const categoryName = 
-        typeof productCategory === "string" 
-          ? productCategory 
+
+      const categoryName =
+        typeof productCategory === "string"
+          ? productCategory
           : productCategory?.name || "Uncategorized";
 
       return {
@@ -51,10 +64,10 @@ export async function GET() {
         email: order.customerEmail || "—",
         address: order.shippingAddress || "—",
         productName: item.product?.name || "Custom Product",
-        category: categoryName, // <-- Ab yahan asli category aayegi!
+        category: categoryName,
         amount: Number(order.totalAmount) || 0,
         paymentMethod: "Online",
-        paymentStatus: "PAID",
+        paymentStatus: order.paymentStatus,
         orderStatus: order.status || "PENDING",
         date: new Date(order.createdAt).toLocaleDateString("en-IN"),
 
@@ -95,8 +108,8 @@ export async function GET() {
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.error("Error fetching orders api:", error);
+  } catch (error) {
+    console.error("Error fetching orders API:", error);
 
     return NextResponse.json(
       {
@@ -111,6 +124,15 @@ export async function GET() {
 // PATCH: Update order status
 export async function PATCH(req: Request) {
   try {
+    const session = await auth();
+
+    if (!session?.user?.id || session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { orderId, status, orderStatus } = body;
 
@@ -124,8 +146,12 @@ export async function PATCH(req: Request) {
     }
 
     const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
-      data: { status: finalStatus },
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: finalStatus,
+      },
     });
 
     return NextResponse.json(updatedOrder, { status: 200 });
@@ -133,7 +159,80 @@ export async function PATCH(req: Request) {
     console.error("Error updating order status:", error);
 
     return NextResponse.json(
-      { error: error.message },
+      { error: error.message || "Failed to update order status" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE: Soft-delete an order from the admin order list
+export async function DELETE(req: Request) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id || session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
+    const { orderId } = body;
+
+    if (!orderId) {
+      return NextResponse.json(
+        { error: "Missing orderId" },
+        { status: 400 }
+      );
+    }
+
+    const order = await prisma.order.findUnique({
+      where: {
+        id: orderId,
+      },
+      select: {
+        id: true,
+        adminDeletedAt: true,
+      },
+    });
+
+    if (!order) {
+      return NextResponse.json(
+        { error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    if (order.adminDeletedAt) {
+      return NextResponse.json(
+        { error: "Order has already been deleted by admin" },
+        { status: 409 }
+      );
+    }
+
+    const deletedOrder = await prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        adminDeletedAt: new Date(),
+        adminDeletedById: session.user.id,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        order: deletedOrder,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error deleting order:", error);
+
+    return NextResponse.json(
+      { error: error.message || "Failed to delete order" },
       { status: 500 }
     );
   }

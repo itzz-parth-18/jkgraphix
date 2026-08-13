@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import CustomerOrderDeleteButton from "@/components/customer/CustomerOrderDeleteButton";
 
 export default async function CustomerOrdersPage() {
   const session = await auth();
@@ -21,9 +22,10 @@ export default async function CustomerOrdersPage() {
   }
 
   const orders = await prisma.order.findMany({
-    where: {
-      userId: user.id,
-    },
+  where: {
+    userId: user.id,
+    customerDeletedAt: null,
+  },
     include: {
       items: true,
     },
@@ -57,38 +59,50 @@ export default async function CustomerOrdersPage() {
           <div className="space-y-6">
 
             {orders.map((order) => (
-              <Link
-                key={order.id}
-                href={`/customer/orders/${order.id}`}
-                className="block rounded-2xl border border-[#EFE8E2] bg-white p-6 transition hover:shadow-md"
-              >
-                <div className="flex items-center justify-between">
+  <div
+    key={order.id}
+    className="rounded-2xl border border-[#EFE8E2] bg-white p-6 transition hover:shadow-md"
+  >
+    <Link
+      href={`/customer/orders/${order.id}`}
+      className="block"
+    >
+      <div className="flex items-center justify-between">
 
-                  <div>
-                    <h2 className="font-semibold text-[#1F1816]">
-                      {order.orderNumber}
-                    </h2>
+        <div>
+          <h2 className="font-semibold text-[#1F1816]">
+            {order.orderNumber}
+          </h2>
 
-                    <p className="mt-2 text-sm text-[#6E625C]">
-                      {order.items.length} item(s)
-                    </p>
-                  </div>
+          <p className="mt-2 text-sm text-[#6E625C]">
+            {order.items.length} item(s)
+          </p>
 
-                  <div className="text-right">
+          {order.adminDeletedAt && (
+            <p className="mt-2 inline-block rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600">
+              Deleted by Admin
+            </p>
+          )}
+        </div>
 
-                    <p className="font-semibold text-[#1F1816]">
-                      ₹{Number(order.totalAmount).toFixed(2)}
-                    </p>
+        <div className="text-right">
 
-                    <p className="mt-2 text-sm text-[#6E625C]">
-                      {order.status}
-                    </p>
+          <p className="font-semibold text-[#1F1816]">
+            ₹{Number(order.totalAmount).toFixed(2)}
+          </p>
 
-                  </div>
+          <p className="mt-2 text-sm text-[#6E625C]">
+            {order.status}
+          </p>
 
-                </div>
-              </Link>
-            ))}
+        </div>
+
+      </div>
+    </Link>
+
+    <CustomerOrderDeleteButton orderId={order.id} />
+  </div>
+))}
 
           </div>
         )}

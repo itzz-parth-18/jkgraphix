@@ -83,19 +83,29 @@ export default function AdminOrdersPage() {
   }, []);
 
   const fetchData = async () => {
-    try {
-      const res = await fetch("/api/admin/orders");
-      if (res.ok) {
-        const data = await res.json();
-        setOrders(data.orders || []);
-        setConsultations(data.consultations || []);
-      }
-    } catch (error) {
-      console.error("Failed to load orders data", error);
-    } finally {
-      setLoading(false);
+  try {
+    const res = await fetch("/api/admin/orders");
+
+    console.log("ADMIN ORDERS API STATUS:", res.status);
+
+    const text = await res.text();
+
+    console.log("ADMIN ORDERS API RESPONSE:", text);
+
+    if (!res.ok) {
+      throw new Error(`Orders API failed: ${res.status} - ${text}`);
     }
-  };
+
+    const data = JSON.parse(text);
+
+    setOrders(data.orders || []);
+    setConsultations(data.consultations || []);
+  } catch (error) {
+    console.error("Failed to load orders data:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleUpdateOrderStatus = async (id: string, newStatus: OrderStatus) => {
     try {

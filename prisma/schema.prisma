@@ -70,6 +70,9 @@ model Order {
   subtotal          Decimal       @db.Decimal(10, 2)
   shippingCost      Decimal       @db.Decimal(10, 2)
   totalAmount       Decimal       @db.Decimal(10, 2)
+ adminDeletedAt    DateTime?
+adminDeletedById  String?
+customerDeletedAt DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   addressLine1      String?
