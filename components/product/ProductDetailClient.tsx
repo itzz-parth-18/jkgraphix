@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import { UploadButton } from "@uploadthing/react";
 import CustomizationEngine, { CustomField } from "@/components/CustomizationEngine";
 import CartDrawer, { CartItem } from "@/components/CartDrawer";
@@ -16,6 +17,7 @@ export default function ProductDetailClient({
   product,
   relatedProducts,
 }: Props) {
+  const { data: session, status: sessionStatus } = useSession();
   const [selectedImage, setSelectedImage] = useState(
     product.imageUrl ||
       "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=1000&auto=format&fit=crop&q=60"
@@ -25,7 +27,8 @@ export default function ProductDetailClient({
   const [quantity, setQuantity] = useState(1);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  
+
+
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const isCR = product.productType === "DESIGN_CONSULTATION";
 
@@ -55,7 +58,7 @@ export default function ProductDetailClient({
       if (res.ok) {
         const data = await res.json();
         const rawItems = Array.isArray(data) ? data : data.items || [];
-        
+
         const formattedItems = rawItems.map((item: any) => ({
           id: item.id,
           productId: item.productId || item.product?.id,
@@ -120,7 +123,7 @@ export default function ProductDetailClient({
           quantity,
           customizations: finalCustomizations,
         }));
-        
+
         window.location.href = "/login?callbackUrl=" + encodeURIComponent(window.location.pathname);
         return;
       }
@@ -154,7 +157,7 @@ export default function ProductDetailClient({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        
+
         {/* Gallery */}
         <div className="lg:col-span-7 space-y-4">
           <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#F9F6F2] border border-[#EFE8E2]">
@@ -242,29 +245,49 @@ export default function ProductDetailClient({
                 </div>
               ) : (
                 <div className="w-full flex flex-col items-center justify-center">
-                  <UploadButton<OurFileRouter, any>
-                    endpoint="customerPhotoUploader"
-                    appearance={{
-                      button: "bg-[#1F1816] text-[#F9F6F2] font-medium text-xs px-6 py-2.5 rounded-xl hover:bg-[#322724] transition shadow-sm cursor-pointer ut-readying:bg-gray-400",
-                      container: "flex flex-col items-center justify-center gap-2 w-full",
-                      allowedContent: "text-xs text-[#6E625C] mt-1"
-                    }}
-                    onClientUploadComplete={(res: any) => {
-                      if (res && res[0]) {
-                        const url = res[0].ufsUrl || res[0].url;
-                        if (url) {
-                          setCustomizationData((prev) => ({
-                            ...prev,
-                            photo_upload: url,
-                            customPhotoUrl: url,
-                          }));
-                        }
-                      }
-                    }}
-                    onUploadError={(error: Error) => {
-                      alert(`Upload failed: ${error.message}`);
-                    }}
-                  />
+                  {sessionStatus === "loading" ? (
+  <p className="text-xs text-[#6E625C]">
+    Checking login status...
+  </p>
+) : !session ? (
+  <button
+    type="button"
+    onClick={() => {
+      window.location.href =
+        "/login?callbackUrl=" +
+        encodeURIComponent(window.location.pathname);
+    }}
+    className="bg-[#1F1816] text-[#F9F6F2] font-medium text-xs px-6 py-2.5 rounded-xl hover:bg-[#322724] transition shadow-sm cursor-pointer"
+  >
+    Login to Upload Photo
+  </button>
+) : (
+  <UploadButton<OurFileRouter, any>
+    endpoint="customerPhotoUploader"
+    appearance={{
+      button:
+        "bg-[#1F1816] text-[#F9F6F2] font-medium text-xs px-6 py-2.5 rounded-xl hover:bg-[#322724] transition shadow-sm cursor-pointer ut-readying:bg-gray-400",
+      container: "flex flex-col items-center justify-center gap-2 w-full",
+      allowedContent: "text-xs text-[#6E625C] mt-1",
+    }}
+    onClientUploadComplete={(res: any) => {
+      if (res && res[0]) {
+        const url = res[0].ufsUrl || res[0].url;
+
+        if (url) {
+          setCustomizationData((prev) => ({
+            ...prev,
+            photo_upload: url,
+            customPhotoUrl: url,
+          }));
+        }
+      }
+    }}
+    onUploadError={(error: Error) => {
+      alert(`Upload failed: ${error.message}`);
+    }}
+  />
+)}
                   <span className="text-[11px] text-[#6E625C] mt-2">Supports PNG, JPG up to 4MB (Progress bar included)</span>
                 </div>
               )}
@@ -318,7 +341,7 @@ export default function ProductDetailClient({
                 <ShoppingBag className="w-4 h-4" />
                 Add to Cart — ₹{(Number(product.basePrice) * quantity).toFixed(2)}
               </button>
-              
+
               {isCR && (
                 <a
                   href={`https://wa.me/917978658304?text=${encodeURIComponent(`Hi JK Graphix, I am interested in designing a custom ${product.name}.`)}`}
