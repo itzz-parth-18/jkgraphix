@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
 type Params = {
   params: Promise<{
@@ -11,6 +12,15 @@ export async function PUT(
   request: NextRequest,
   { params }: Params
 ) {
+  const session = await auth();
+
+  if (!session || session.user?.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
   const { fieldId } = await params;
 
   try {
@@ -44,6 +54,15 @@ export async function DELETE(
   request: NextRequest,
   { params }: Params
 ) {
+  const session = await auth();
+
+  if (!session || session.user?.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
   const { fieldId } = await params;
 
   try {

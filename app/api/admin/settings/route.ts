@@ -3,19 +3,35 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
 export async function GET() {
+  const session = await auth();
+
+  if (!session || session.user?.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
   try {
     const settings = await prisma.setting.findMany();
     return NextResponse.json(settings);
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch settings" },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+
+if (!session || session.user?.role !== "ADMIN") {
+  return NextResponse.json(
+    { error: "Unauthorized" },
+    { status: 401 }
+  );
+}
 
   try {
     const body = await req.json();
