@@ -58,51 +58,67 @@ export default async function CustomerOrdersPage() {
         ) : (
           <div className="space-y-6">
 
-            {orders.map((order) => (
-  <div
-    key={order.id}
-    className="rounded-2xl border border-[#EFE8E2] bg-white p-6 transition hover:shadow-md"
-  >
-    <Link
-      href={`/customer/orders/${order.id}`}
-      className="block"
+            {orders.map((order) => {
+  const isDeletedByAdmin = Boolean(order.adminDeletedAt);
+
+  return (
+    <div
+      key={order.id}
+      className={`rounded-2xl border p-6 transition ${
+        isDeletedByAdmin
+          ? "border-[#E8DDD7] bg-[#F5F1EE]"
+          : "border-[#EFE8E2] bg-white hover:shadow-md"
+      }`}
     >
-      <div className="flex items-center justify-between">
+      <Link
+        href={`/customer/orders/${order.id}`}
+        className="block"
+      >
+        <div className="flex items-center justify-between">
 
-        <div>
-          <h2 className="font-semibold text-[#1F1816]">
-            {order.orderNumber}
-          </h2>
+          <div className={isDeletedByAdmin ? "opacity-55" : ""}>
+            <h2
+              className={`font-semibold text-[#1F1816] ${
+                isDeletedByAdmin ? "line-through decoration-[#8C7C74]" : ""
+              }`}
+            >
+              {order.orderNumber}
+            </h2>
 
-          <p className="mt-2 text-sm text-[#6E625C]">
-            {order.items.length} item(s)
-          </p>
-
-          {order.adminDeletedAt && (
-            <p className="mt-2 inline-block rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600">
-              Deleted by Admin
+            <p className="mt-2 text-sm text-[#6E625C]">
+              {order.items.length} item(s)
             </p>
-          )}
+
+            {isDeletedByAdmin && (
+              <p className="mt-2 inline-block rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600">
+                Deleted by Admin
+              </p>
+            )}
+          </div>
+
+          <div
+            className={`text-right ${
+              isDeletedByAdmin ? "opacity-55" : ""
+            }`}
+          >
+            <p className="font-semibold text-[#1F1816]">
+              ₹{Number(order.totalAmount).toFixed(2)}
+            </p>
+
+            <p className="mt-2 text-sm text-[#6E625C]">
+              {order.status}
+            </p>
+          </div>
+
         </div>
+      </Link>
 
-        <div className="text-right">
-
-          <p className="font-semibold text-[#1F1816]">
-            ₹{Number(order.totalAmount).toFixed(2)}
-          </p>
-
-          <p className="mt-2 text-sm text-[#6E625C]">
-            {order.status}
-          </p>
-
-        </div>
-
-      </div>
-    </Link>
-
-    <CustomerOrderDeleteButton orderId={order.id} />
-  </div>
-))}
+      {isDeletedByAdmin && (
+        <CustomerOrderDeleteButton orderId={order.id} />
+      )}
+    </div>
+  );
+})}
 
           </div>
         )}
