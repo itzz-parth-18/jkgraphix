@@ -63,14 +63,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   async jwt({ token, user }) {
     if (user) {
       token.id = user.id;
-      token.role = user.role;
+    }
+
+    if (token.id) {
+      const dbUser = await prisma.user.findUnique({
+        where: {
+          id: token.id as string,
+        },
+        select: {
+          role: true,
+        },
+      });
+
+      if (!dbUser) {
+        // Invalidate the application's authorization state
+        // for a user that no longer exists.
+        token.id = "";
+        token.role = "CUSTOMER";
+      } else {
+        token.role = dbUser.role;
+      }
     }
 
     return token;
   },
 
   async session({ session, token }) {
-    if (session.user) {
+    if (session.user && token.id) {
       session.user.id = token.id as string;
       session.user.role = token.role as "ADMIN" | "CUSTOMER";
     }
