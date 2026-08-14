@@ -31,7 +31,29 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (sku !== undefined) updateData.sku = sku;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
     
-    if (body.productType !== undefined) updateData.productType = body.productType; 
+  if (body.categoryId !== undefined) {
+  if (!body.categoryId) {
+    return NextResponse.json(
+      { error: "Category is required" },
+      { status: 400 }
+    );
+  }
+
+  const category = await prisma.category.findUnique({
+    where: { id: body.categoryId },
+    select: { type: true },
+  });
+
+  if (!category) {
+    return NextResponse.json(
+      { error: "Selected category not found" },
+      { status: 400 }
+    );
+  }
+
+  updateData.categoryId = body.categoryId;
+  updateData.productType = category.type;
+}
     
     // Visibility Checkboxes Save Logic
     if (body.isFeatured !== undefined) updateData.isFeatured = Boolean(body.isFeatured);

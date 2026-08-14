@@ -144,7 +144,17 @@ export default function AddProductPage() {
               <label className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Category</label>
               <select
                 value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+onChange={(e) => {
+  const selectedCategory = categories.find(
+    (cat) => cat.id === e.target.value
+  );
+
+  setFormData({
+    ...formData,
+    categoryId: e.target.value,
+    productType: selectedCategory?.type || "QUICK_CUSTOMIZE",
+  });
+}}
                 className="w-full px-4 py-2.5 bg-[#F9F6F2] border border-[#EFE8E2] rounded-xl text-sm focus:outline-none focus:border-[#C89A84]"
               >
                 <option value="">Select a Category</option>
@@ -255,6 +265,7 @@ export default function AddProductPage() {
                 checked={formData.productType === "QUICK_CUSTOMIZE"}
                 onChange={() => setFormData({ ...formData, productType: "QUICK_CUSTOMIZE" })}
                 className="mt-1 text-[#C89A84] focus:ring-[#C89A84]"
+                disabled
               />
               <div>
                 <p className="font-semibold text-[#1F1816]">Quick Customize</p>
@@ -269,6 +280,7 @@ export default function AddProductPage() {
                 checked={formData.productType === "DESIGN_CONSULTATION"}
                 onChange={() => setFormData({ ...formData, productType: "DESIGN_CONSULTATION" })}
                 className="mt-1 text-[#C89A84] focus:ring-[#C89A84]"
+                disabled
               />
               <div>
                 <p className="font-semibold text-[#1F1816]">Design Consultation</p>

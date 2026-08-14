@@ -45,21 +45,28 @@ export default async function ShopPage({ searchParams }: Props) {
 
   // 1. Database se SIRF wahi Categories fetch karo jo current page ke type se match karti hain
   const dbCategories = await (prisma as any).category.findMany({
-    where: isMainHubView ? {} : { type: currentType },
-    orderBy: { name: 'asc' }
-  });
+  where: isMainHubView
+    ? {}
+    : {
+        type: currentType,
+      },
+  orderBy: {
+    name: "asc",
+  },
+});
 
   // 2. Base Query Setup for Products
   const where: any = {
     status: "PUBLISHED",
   };
 
-  // Products ko unki category ke type ke hisaab se filter karo
-  if (!isMainHubView) {
-    where.category = {
-      type: currentType
-    };
-  }
+  // Products ko ServiceType ke through filter karo.
+// Category.type ko source of truth nahi maanenge.
+if (!isMainHubView) {
+  where.category = {
+    type: currentType,
+  };
+}
 
   if (search) {
     where.OR = [
@@ -103,10 +110,16 @@ export default async function ShopPage({ searchParams }: Props) {
     price: Number(product.basePrice),
     imageUrl: product.imageUrl || "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500&auto=format&fit=crop&q=60",
     category: product.category?.name || "Uncategorized",
+    categoryType: product.category?.type,
   }));
 
-  const qcShowcase = formattedProducts.slice(0, 4);
-  const crShowcase = formattedProducts.slice(4, 8);
+  const qcShowcase = formattedProducts
+  .filter((product: any) => product.categoryType === ProductType.QUICK_CUSTOMIZE)
+  .slice(0, 4);
+
+const crShowcase = formattedProducts
+  .filter((product: any) => product.categoryType === ProductType.DESIGN_CONSULTATION)
+  .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#F9F6F2]">

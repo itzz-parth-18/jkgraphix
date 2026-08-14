@@ -60,14 +60,33 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const { 
-      name, description, basePrice, price, sku, imageUrl, 
-      thumbnailUrl, galleryUrls, fullDescription, shortDescription, categoryId, status,
-      productType, isFeatured, showOnHomepage, isSeasonal
-    } = body;
+  name, description, basePrice, price, sku, imageUrl, 
+  thumbnailUrl, galleryUrls, fullDescription, shortDescription, categoryId, status,
+  isFeatured, showOnHomepage, isSeasonal
+} = body;
 
     if (!name) {
       return NextResponse.json({ error: "Product name is required" }, { status: 400 });
     }
+
+if (!categoryId) {
+  return NextResponse.json(
+    { error: "Category is required" },
+    { status: 400 }
+  );
+}
+
+const category = await prisma.category.findUnique({
+  where: { id: categoryId },
+  select: { type: true },
+});
+
+if (!category) {
+  return NextResponse.json(
+    { error: "Selected category not found" },
+    { status: 400 }
+  );
+}
 
     const slug = await generateUniqueSlug(name);
     // Dono (basePrice ya price) me se jo bhi aaye usko properly number me convert karo
@@ -86,7 +105,7 @@ export async function POST(req: Request) {
         imageUrl: finalImageUrl,
         status: status || "PUBLISHED",
         categoryId: categoryId || null,
-        productType: productType || "QUICK_CUSTOMIZE",
+        productType: category.type,
         isFeatured: Boolean(isFeatured),
         showOnHomepage: Boolean(showOnHomepage),
         isSeasonal: Boolean(isSeasonal),
