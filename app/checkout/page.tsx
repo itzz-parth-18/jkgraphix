@@ -27,8 +27,6 @@ const serializedCart = JSON.parse(
   JSON.stringify(cart)
 );
 
-console.dir(cart, { depth: null });
-
   return (
     <div className="min-h-screen bg-[#F9F6F2] text-[#2C2320] flex flex-col">
       
