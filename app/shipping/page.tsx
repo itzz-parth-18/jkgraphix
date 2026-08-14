@@ -147,8 +147,8 @@ export default function ShippingPage() {
         <section className="bg-white p-8 rounded-3xl border border-[#EFE8E2] shadow-sm flex flex-col items-center text-center space-y-4">
           <h2 className="font-serif text-2xl font-bold text-[#1F1816]">Need Help?</h2>
           <p className="text-[#6E625C]">If you have any questions regarding your shipping or tracking, our artisan support team is happy to assist.</p>
-          <a href="mailto:support@jkgraphix.com" className="mt-2 inline-flex items-center gap-2 bg-[#1F1816] text-white px-6 py-3 rounded-xl hover:bg-[#C89A84] transition-colors font-medium">
-            <Mail className="w-5 h-5" /> support@jkgraphix.com
+          <a href="mailto:support.jkgraphix@gmail.com" className="mt-2 inline-flex items-center gap-2 bg-[#1F1816] text-white px-6 py-3 rounded-xl hover:bg-[#C89A84] transition-colors font-medium">
+            <Mail className="w-5 h-5" /> support.jkgraphix@gmail.com
           </a>
         </section>
 

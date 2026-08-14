@@ -65,7 +65,7 @@ export default async function AdminSettingsPage() {
               <input 
                 type="email" 
                 name="SUPPORT_EMAIL" 
-                defaultValue={getSetting("SUPPORT_EMAIL") || "support@jkgraphix.com"} 
+                defaultValue={getSetting("SUPPORT_EMAIL") || "support.jkgraphix@gmail.com"} 
                 className="w-full px-3 py-2 border border-taupe-border rounded-lg focus:outline-none focus:border-rose text-sm bg-cream" 
               />
             </div>

@@ -11,7 +11,7 @@ export default async function Footer() {
 
   const instagramUrl = getSetting("INSTAGRAM_URL") || "https://instagram.com";
   const whatsappNum = getSetting("WHATSAPP_NUMBER") || "917978658304";
-  const supportEmail = getSetting("SUPPORT_EMAIL") || "support@jkgraphix.com";
+  const supportEmail = getSetting("SUPPORT_EMAIL") || "support.jkgraphix@gmail.com";
 
   return (
     <footer className="bg-[#1F1816] text-[#F9F6F2] border-t border-[#322724] pt-16 pb-12 transition-colors duration-300">

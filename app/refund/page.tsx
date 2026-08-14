@@ -109,7 +109,7 @@ export default function RefundPolicyPage() {
           <p className="text-gray-300 max-w-2xl text-sm md:text-base leading-relaxed">
             If you believe you are eligible for a replacement due to a defect or transit damage, please contact us within <strong>48 hours of delivery</strong>. Include your Order Number and clear photographs of the unboxing/damage so our artisan team can assist you swiftly.
           </p>
-          <a href="mailto:support@jkgraphix.com" className="mt-4 inline-block bg-[#C89A84] text-[#1F1816] px-8 py-3 rounded-xl hover:bg-white transition-colors font-bold">
+          <a href="mailto:support.jkgraphix@gmail.com" className="mt-4 inline-block bg-[#C89A84] text-[#1F1816] px-8 py-3 rounded-xl hover:bg-white transition-colors font-bold">
             Email Support
           </a>
         </section>
