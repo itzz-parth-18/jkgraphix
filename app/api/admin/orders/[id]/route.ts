@@ -40,44 +40,35 @@ export async function DELETE(
     const { id } = await params;
 
     const order = await prisma.order.findUnique({
-      where: {
-        id,
-      },
-      select: {
-        id: true,
-        adminDeletedAt: true,
-      },
-    });
+  where: {
+    id,
+  },
+  select: {
+    id: true,
+  },
+});
 
-    if (!order) {
-      return NextResponse.json(
-        { message: "Order not found" },
-        { status: 404 }
-      );
-    }
+if (!order) {
+  return NextResponse.json(
+    { message: "Order not found" },
+    { status: 404 }
+  );
+}
 
-    if (order.adminDeletedAt) {
-      return NextResponse.json(
-        { message: "Order already deleted by admin" },
-        { status: 409 }
-      );
-    }
+// Permanently delete the order.
+// OrderItem records are automatically deleted because
+// the Prisma relation uses onDelete: Cascade.
+await prisma.order.delete({
+  where: {
+    id,
+  },
+});
 
-    const updatedOrder = await prisma.order.update({
-      where: {
-        id,
-      },
-      data: {
-        adminDeletedAt: new Date(),
-        adminDeletedById: admin.id,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: "Order deleted successfully",
-      orderId: updatedOrder.id,
-    });
+return NextResponse.json({
+  success: true,
+  message: "Order deleted successfully",
+  orderId: id,
+});
   } catch (error) {
     console.error("Error deleting order:", error);
 

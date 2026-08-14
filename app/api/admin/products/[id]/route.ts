@@ -83,20 +83,37 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     const { id } = await params;
 
-    const orderCount = await (prisma as any).orderItem.count({
-      where: { productId: id }
-    }).catch(() => 0);
+    // Check for blocking active/incomplete orders
+    const blockingOrderItems = await prisma.orderItem.findMany({
+      where: {
+        productId: id,
+        order: {
+          adminDeletedAt: null,
+          status: {
+            notIn: ["COMPLETED", "CANCELLED"],
+          },
+        },
+      },
+      select: {
+        orderId: true,
+      },
+    });
 
-    if (orderCount > 0) {
+    if (blockingOrderItems.length > 0) {
       return NextResponse.json(
-        { error: `Cannot delete! This product is linked to ${orderCount} customer order(s). Please change its status to 'OUT_OF_STOCK' or 'DRAFT' instead.` }, 
+        {
+          error: `Cannot delete this product because it is linked to ${blockingOrderItems.length} active order(s). Complete or delete those order(s) first.`,
+        },
         { status: 400 }
       );
     }
 
-    await (prisma as any).product.delete({
+    // Delete the product. Historical completed order items will remain 
+    // due to onDelete: SetNull on the relation.
+    await prisma.product.delete({
       where: { id },
     });
+
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: any) {
     console.error("Error deleting product:", error);

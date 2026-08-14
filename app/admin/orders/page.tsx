@@ -19,10 +19,6 @@ export type OrderStatus =
 
 export type PaymentStatus = "PENDING" | "PAID" | "REFUNDED";
 
-export type ConsultationStatus = 
-  | "NEW_REQUEST" | "CONTACTED" | "IN_DISCUSSION" 
-  | "QUOTATION_SENT" | "CONFIRMED" | "CONVERTED" | "CLOSED" | "CANCELLED";
-
 export interface Order {
   id: string;
   orderNumber: string;
@@ -49,9 +45,11 @@ export interface Order {
 
 export interface Consultation {
   id: string;
+  orderNumber?: string;
   customerName: string;
   phone: string;
   email: string;
+  whatsappNumber?: string;
   productName: string;
   category: string | { name?: string };
   description: string;
@@ -59,7 +57,9 @@ export interface Consultation {
   budget?: string;
   preferredDeliveryDate?: string;
   additionalNotes?: string;
-  discussionStatus: ConsultationStatus;
+  orderStatus: OrderStatus;
+  paymentStatus: PaymentStatus;
+  amount: number;
   date: string;
   internalNotes: string[];
 }
@@ -83,29 +83,23 @@ export default function AdminOrdersPage() {
   }, []);
 
   const fetchData = async () => {
-  try {
-    const res = await fetch("/api/admin/orders");
+    try {
+      const res = await fetch("/api/admin/orders");
+      const text = await res.text();
+      
+      if (!res.ok) {
+        throw new Error(`Orders API failed: ${res.status} - ${text}`);
+      }
 
-    console.log("ADMIN ORDERS API STATUS:", res.status);
-
-    const text = await res.text();
-
-    console.log("ADMIN ORDERS API RESPONSE:", text);
-
-    if (!res.ok) {
-      throw new Error(`Orders API failed: ${res.status} - ${text}`);
+      const data = JSON.parse(text);
+      setOrders(data.orders || []);
+      setConsultations(data.consultations || []);
+    } catch (error) {
+      console.error("Failed to load orders data:", error);
+    } finally {
+      setLoading(false);
     }
-
-    const data = JSON.parse(text);
-
-    setOrders(data.orders || []);
-    setConsultations(data.consultations || []);
-  } catch (error) {
-    console.error("Failed to load orders data:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleUpdateOrderStatus = async (id: string, newStatus: OrderStatus) => {
     try {
@@ -116,8 +110,13 @@ export default function AdminOrdersPage() {
       });
       if (res.ok) {
         setOrders(orders.map(o => o.id === id ? { ...o, orderStatus: newStatus } : o));
+        setConsultations(consultations.map(c => c.id === id ? { ...c, orderStatus: newStatus } : c));
+        
         if (selectedOrder && selectedOrder.id === id) {
           setSelectedOrder({ ...selectedOrder, orderStatus: newStatus });
+        }
+        if (selectedConsultation && selectedConsultation.id === id) {
+          setSelectedConsultation({ ...selectedConsultation, orderStatus: newStatus });
         }
       }
     } catch (error) {
@@ -134,46 +133,17 @@ export default function AdminOrdersPage() {
       });
       if (res.ok) {
         setOrders(orders.map(o => o.id === id ? { ...o, paymentStatus: newPaymentStatus } : o));
+        setConsultations(consultations.map(c => c.id === id ? { ...c, paymentStatus: newPaymentStatus } : c));
+        
         if (selectedOrder && selectedOrder.id === id) {
           setSelectedOrder({ ...selectedOrder, paymentStatus: newPaymentStatus });
+        }
+        if (selectedConsultation && selectedConsultation.id === id) {
+          setSelectedConsultation({ ...selectedConsultation, paymentStatus: newPaymentStatus });
         }
       }
     } catch (error) {
       alert("Failed to update payment status");
-    }
-  };
-
-  const handleUpdateConsultationStatus = async (id: string, newStatus: ConsultationStatus) => {
-    try {
-      const res = await fetch(`/api/admin/consultations/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ discussionStatus: newStatus }),
-      });
-      if (res.ok) {
-        setConsultations(consultations.map(c => c.id === id ? { ...c, discussionStatus: newStatus } : c));
-        if (selectedConsultation && selectedConsultation.id === id) {
-          setSelectedConsultation({ ...selectedConsultation, discussionStatus: newStatus });
-        }
-      }
-    } catch (error) {
-      alert("Failed to update consultation status");
-    }
-  };
-
-  const handleConvertToOrder = async (consultation: Consultation) => {
-    if (!confirm(`Convert consultation ${consultation.id} into a Quick Customize Order?`)) return;
-    try {
-      const res = await fetch(`/api/admin/consultations/${consultation.id}/convert`, {
-        method: "POST",
-      });
-      if (res.ok) {
-        alert("Successfully converted consultation to order!");
-        fetchData();
-        setSelectedConsultation(null);
-      }
-    } catch (error) {
-      alert("Failed to convert consultation");
     }
   };
 
@@ -204,12 +174,14 @@ export default function AdminOrdersPage() {
   };
 
   const handleDeleteOrder = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this order?")) return;
+    if (!confirm("Are you sure you want to permanently delete this order?")) return;
     try {
       const res = await fetch(`/api/admin/orders/${id}`, { method: "DELETE" });
       if (res.ok) {
         setOrders(orders.filter(o => o.id !== id));
+        setConsultations(consultations.filter(c => c.id !== id));
         setSelectedOrder(null);
+        setSelectedConsultation(null);
       }
     } catch (error) {
       alert("Failed to delete order");
@@ -234,10 +206,12 @@ export default function AdminOrdersPage() {
     const matchesSearch = 
       c.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.phone.includes(searchQuery) ||
+      (c.orderNumber && c.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
       c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.productName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "ALL" || c.discussionStatus === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesStatus = statusFilter === "ALL" || c.orderStatus === statusFilter;
+    const matchesPayment = paymentFilter === "ALL" || c.paymentStatus === paymentFilter;
+    return matchesSearch && matchesStatus && matchesPayment;
   });
 
   // Helper to extract category name safely
@@ -260,7 +234,7 @@ export default function AdminOrdersPage() {
       {/* Tabs */}
       <div className="flex border-b border-[#EFE8E2] gap-8">
         <button
-          onClick={() => { setActiveTab("orders"); setStatusFilter("ALL"); }}
+          onClick={() => { setActiveTab("orders"); setStatusFilter("ALL"); setPaymentFilter("ALL"); }}
           className={`pb-3 font-medium text-sm transition relative ${
             activeTab === "orders" ? "text-[#1F1816] font-semibold border-b-2 border-[#1F1816]" : "text-[#6E625C] hover:text-[#1F1816]"
           }`}
@@ -268,7 +242,7 @@ export default function AdminOrdersPage() {
           Quick Customize Orders ({orders.length})
         </button>
         <button
-          onClick={() => { setActiveTab("consultations"); setStatusFilter("ALL"); }}
+          onClick={() => { setActiveTab("consultations"); setStatusFilter("ALL"); setPaymentFilter("ALL"); }}
           className={`pb-3 font-medium text-sm transition relative ${
             activeTab === "consultations" ? "text-[#1F1816] font-semibold border-b-2 border-[#1F1816]" : "text-[#6E625C] hover:text-[#1F1816]"
           }`}
@@ -301,42 +275,26 @@ export default function AdminOrdersPage() {
             className="bg-[#F9F6F2] border border-[#EFE8E2] px-3 py-2 rounded-xl text-xs font-medium text-[#2C2320] focus:outline-none focus:border-[#C89A84]"
           >
             <option value="ALL">All Statuses</option>
-            {activeTab === "orders" ? (
-              <>
-                <option value="PENDING">Pending</option>
-                <option value="CONFIRMED">Confirmed</option>
-                <option value="DESIGNING">Designing</option>
-                <option value="PRINTING">In Production</option>
-                <option value="SHIPPED">Shipped</option>
-                <option value="DELIVERED">Delivered</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="CANCELLED">Cancelled</option>
-              </>
-            ) : (
-              <>
-                <option value="NEW_REQUEST">New Request</option>
-                <option value="CONTACTED">Contacted</option>
-                <option value="IN_DISCUSSION">In Discussion</option>
-                <option value="QUOTATION_SENT">Quotation Sent</option>
-                <option value="CONFIRMED">Confirmed</option>
-                <option value="CONVERTED">Converted</option>
-                <option value="CLOSED">Closed</option>
-              </>
-            )}
+            <option value="PENDING">Pending</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="DESIGNING">Designing</option>
+            <option value="PRINTING">In Production</option>
+            <option value="SHIPPED">Shipped</option>
+            <option value="DELIVERED">Delivered</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
           </select>
 
-          {activeTab === "orders" && (
-            <select
-              value={paymentFilter}
-              onChange={(e) => setPaymentFilter(e.target.value)}
-              className="bg-[#F9F6F2] border border-[#EFE8E2] px-3 py-2 rounded-xl text-xs font-medium text-[#2C2320] focus:outline-none focus:border-[#C89A84]"
-            >
-              <option value="ALL">All Payments</option>
-              <option value="PENDING">Pending</option>
-              <option value="PAID">Paid</option>
-              <option value="REFUNDED">Refunded</option>
-            </select>
-          )}
+          <select
+            value={paymentFilter}
+            onChange={(e) => setPaymentFilter(e.target.value)}
+            className="bg-[#F9F6F2] border border-[#EFE8E2] px-3 py-2 rounded-xl text-xs font-medium text-[#2C2320] focus:outline-none focus:border-[#C89A84]"
+          >
+            <option value="ALL">All Payments</option>
+            <option value="PENDING">Pending</option>
+            <option value="PAID">Paid</option>
+            <option value="REFUNDED">Refunded</option>
+          </select>
         </div>
       </div>
 
@@ -431,23 +389,25 @@ export default function AdminOrdersPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#F9F6F2]/60 border-b border-[#EFE8E2] text-xs font-semibold text-[#6E625C] uppercase tracking-wider">
-                  <th className="py-4 px-6">Request ID</th>
+                  <th className="py-4 px-6">Order Number</th>
                   <th className="py-4 px-6">Customer</th>
                   <th className="py-4 px-6">Product / Category</th>
-                  <th className="py-4 px-6">Discussion Status</th>
+                  <th className="py-4 px-6">Amount</th>
+                  <th className="py-4 px-6">Payment</th>
+                  <th className="py-4 px-6">Status</th>
                   <th className="py-4 px-6">Date</th>
                   <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EFE8E2] text-sm">
                 {loading ? (
-                  <tr><td colSpan={6} className="py-12 text-center text-[#6E625C]">Loading consultations...</td></tr>
+                  <tr><td colSpan={8} className="py-12 text-center text-[#6E625C]">Loading consultations...</td></tr>
                 ) : filteredConsultations.length === 0 ? (
-                  <tr><td colSpan={6} className="py-12 text-center text-[#6E625C]">No design consultation requests found.</td></tr>
+                  <tr><td colSpan={8} className="py-12 text-center text-[#6E625C]">No design consultation requests found.</td></tr>
                 ) : (
                   filteredConsultations.map((consult) => (
                     <tr key={consult.id} className="hover:bg-[#F9F6F2]/40 transition">
-                      <td className="py-4 px-6 font-semibold text-[#1F1816]">{consult.id}</td>
+                      <td className="py-4 px-6 font-semibold text-[#1F1816]">{consult.orderNumber || consult.id}</td>
                       <td className="py-4 px-6">
                         <p className="font-medium text-[#1F1816]">{consult.customerName}</p>
                         <p className="text-xs text-[#6E625C]">{consult.phone}</p>
@@ -456,19 +416,28 @@ export default function AdminOrdersPage() {
                         <p className="font-medium text-[#2C2320]">{consult.productName}</p>
                         <p className="text-xs text-[#6E625C]">{getCategoryName(consult.category)}</p>
                       </td>
+                      <td className="py-4 px-6 font-semibold text-[#1F1816]">₹{consult.amount.toLocaleString("en-IN")}</td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
+                          consult.paymentStatus === "PAID" ? "bg-emerald-50 text-emerald-800" :
+                          consult.paymentStatus === "PENDING" ? "bg-amber-50 text-amber-800" : "bg-gray-100 text-gray-700"
+                        }`}>
+                          {consult.paymentStatus}
+                        </span>
+                      </td>
                       <td className="py-4 px-6">
                         <select
-                          value={consult.discussionStatus}
-                          onChange={(e) => handleUpdateConsultationStatus(consult.id, e.target.value as ConsultationStatus)}
+                          value={consult.orderStatus}
+                          onChange={(e) => handleUpdateOrderStatus(consult.id, e.target.value as OrderStatus)}
                           className="bg-[#F9F6F2] border border-[#EFE8E2] px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#2C2320] focus:outline-none focus:border-[#C89A84]"
                         >
-                          <option value="NEW_REQUEST">New Request</option>
-                          <option value="CONTACTED">Contacted</option>
-                          <option value="IN_DISCUSSION">In Discussion</option>
-                          <option value="QUOTATION_SENT">Quotation Sent</option>
+                          <option value="PENDING">Pending</option>
                           <option value="CONFIRMED">Confirmed</option>
-                          <option value="CONVERTED">Converted</option>
-                          <option value="CLOSED">Closed</option>
+                          <option value="DESIGNING">Designing</option>
+                          <option value="PRINTING">In Production</option>
+                          <option value="SHIPPED">Shipped</option>
+                          <option value="DELIVERED">Delivered</option>
+                          <option value="COMPLETED">Completed</option>
                           <option value="CANCELLED">Cancelled</option>
                         </select>
                       </td>
@@ -478,16 +447,16 @@ export default function AdminOrdersPage() {
                           <button
                             onClick={() => setSelectedConsultation(consult)}
                             className="p-2 rounded-lg bg-[#F9F6F2] hover:bg-[#EFE8E2] text-[#6E625C] hover:text-[#1F1816] transition"
-                            title="View Request"
+                            title="View Details"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleConvertToOrder(consult)}
-                            className="inline-flex items-center gap-1.5 bg-[#1F1816] text-[#F9F6F2] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#322724] transition"
-                            title="Convert to Order"
+                            onClick={() => handleDeleteOrder(consult.id)}
+                            className="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
+                            title="Delete Order"
                           >
-                            <Sparkles className="w-3.5 h-3.5" /> Convert
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -506,7 +475,7 @@ export default function AdminOrdersPage() {
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-6 shadow-xl border border-[#EFE8E2] my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#EFE8E2] pb-4">
               <div>
-                <h3 className="font-serif text-2xl font-bold text-[#1F1816]">Order Details: {selectedOrder.id}</h3>
+                <h3 className="font-serif text-2xl font-bold text-[#1F1816]">Order Details: {selectedOrder.orderNumber || selectedOrder.id}</h3>
                 <p className="text-xs text-[#6E625C]">Placed on {selectedOrder.date}</p>
               </div>
               <button
@@ -528,7 +497,7 @@ export default function AdminOrdersPage() {
               </div>
             </div>
 
-            {/* Product Information */}
+            {/* Product & Payment */}
             <div className="space-y-3 bg-[#F9F6F2]/50 p-4 rounded-xl border border-[#EFE8E2]">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Product & Payment</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
@@ -635,7 +604,7 @@ export default function AdminOrdersPage() {
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-6 shadow-xl border border-[#EFE8E2] my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#EFE8E2] pb-4">
               <div>
-                <h3 className="font-serif text-2xl font-bold text-[#1F1816]">Consultation Request: {selectedConsultation.id}</h3>
+                <h3 className="font-serif text-2xl font-bold text-[#1F1816]">Consultation Order: {selectedConsultation.orderNumber || selectedConsultation.id}</h3>
                 <p className="text-xs text-[#6E625C]">Submitted on {selectedConsultation.date}</p>
               </div>
               <button
@@ -656,12 +625,41 @@ export default function AdminOrdersPage() {
               </div>
             </div>
 
+            {/* Product & Payment */}
+            <div className="space-y-3 bg-[#F9F6F2]/50 p-4 rounded-xl border border-[#EFE8E2]">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Product & Payment</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div><span className="text-[#6E625C] text-xs">Product:</span> <p className="font-semibold text-[#1F1816]">{selectedConsultation.productName}</p></div>
+                <div><span className="text-[#6E625C] text-xs">Category:</span> <p className="font-semibold text-[#1F1816]">{getCategoryName(selectedConsultation.category)}</p></div>
+                <div><span className="text-[#6E625C] text-xs">Amount:</span> <p className="font-semibold text-[#1F1816]">₹{selectedConsultation.amount?.toLocaleString("en-IN") || 0}</p></div>
+                <div>
+                  <span className="text-[#6E625C] text-xs">Payment Status:</span>
+                  <select
+                    value={selectedConsultation.paymentStatus}
+                    onChange={(e) => handleUpdatePaymentStatus(selectedConsultation.id, e.target.value as PaymentStatus)}
+                    className="w-full mt-1 bg-white border border-[#EFE8E2] px-3 py-1.5 rounded-lg text-xs font-medium text-[#2C2320]"
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="PAID">Paid</option>
+                    <option value="FAILED">Failed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             {/* Project Information */}
             <div className="space-y-3 bg-[#F9F6F2]/50 p-4 rounded-xl border border-[#EFE8E2]">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Project Details</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Consultation Details</h4>
               <div className="space-y-2 text-sm">
-                <div><span className="text-[#6E625C] text-xs">Product Interest:</span> <p className="font-semibold text-[#1F1816]">{selectedConsultation.productName} ({getCategoryName(selectedConsultation.category)})</p></div>
-                <div><span className="text-[#6E625C] text-xs">Description:</span> <p className="text-[#2C2320]">{selectedConsultation.description}</p></div>
+                {/* NEW WHATSAPP FIELD */}
+                <div className="bg-green-50 border border-green-100 p-2.5 rounded-lg mb-3">
+                  <span className="text-green-800 text-xs font-semibold uppercase tracking-wider">Provided WhatsApp Number:</span>
+                  <p className="font-bold text-green-900 text-base">
+  {selectedConsultation.whatsappNumber || selectedConsultation.phone || "Not provided"}
+</p>
+                </div>
+                
+                <div><span className="text-[#6E625C] text-xs">Description / Notes:</span> <p className="text-[#2C2320]">{selectedConsultation.description}</p></div>
                 {selectedConsultation.budget && <div><span className="text-[#6E625C] text-xs">Budget:</span> <p className="font-semibold text-[#1F1816]">{selectedConsultation.budget}</p></div>}
                 {selectedConsultation.preferredDeliveryDate && <div><span className="text-[#6E625C] text-xs">Preferred Date:</span> <p className="font-semibold text-[#1F1816]">{selectedConsultation.preferredDeliveryDate}</p></div>}
                 {selectedConsultation.referenceImages?.length > 0 && (
@@ -679,21 +677,21 @@ export default function AdminOrdersPage() {
               </div>
             </div>
 
-            {/* Discussion Status */}
+            {/* Order Status */}
             <div className="space-y-3 bg-[#F9F6F2]/50 p-4 rounded-xl border border-[#EFE8E2]">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Discussion Status</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">Order Status</h4>
               <select
-                value={selectedConsultation.discussionStatus}
-                onChange={(e) => handleUpdateConsultationStatus(selectedConsultation.id, e.target.value as ConsultationStatus)}
+                value={selectedConsultation.orderStatus}
+                onChange={(e) => handleUpdateOrderStatus(selectedConsultation.id, e.target.value as OrderStatus)}
                 className="w-full bg-white border border-[#EFE8E2] px-3 py-2 rounded-xl text-sm font-semibold text-[#1F1816]"
               >
-                <option value="NEW_REQUEST">New Request</option>
-                <option value="CONTACTED">Contacted</option>
-                <option value="IN_DISCUSSION">In Discussion</option>
-                <option value="QUOTATION_SENT">Quotation Sent</option>
+                <option value="PENDING">Pending</option>
                 <option value="CONFIRMED">Confirmed</option>
-                <option value="CONVERTED">Converted</option>
-                <option value="CLOSED">Closed</option>
+                <option value="DESIGNING">Designing</option>
+                <option value="PRINTING">In Production</option>
+                <option value="SHIPPED">Shipped</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="COMPLETED">Completed</option>
                 <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
@@ -727,16 +725,6 @@ export default function AdminOrdersPage() {
                   Add Note
                 </button>
               </div>
-            </div>
-
-            {/* Convert Button */}
-            <div className="pt-2 flex justify-end">
-              <button
-                onClick={() => handleConvertToOrder(selectedConsultation)}
-                className="inline-flex items-center gap-2 bg-[#1F1816] text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#322724] transition shadow-sm"
-              >
-                <Sparkles className="w-4 h-4" /> Convert to Quick Customize Order
-              </button>
             </div>
           </div>
         </div>

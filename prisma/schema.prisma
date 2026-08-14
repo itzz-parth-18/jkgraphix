@@ -90,16 +90,16 @@ customerDeletedAt DateTime?
 }
 
 model OrderItem {
-  id             String  @id @default(cuid())
+  id             String   @id @default(cuid())
   orderId        String
-  productId      String
-  quantity       Int     @default(1)
-  unitPrice      Decimal @db.Decimal(10, 2)
+  productId      String?
+  quantity       Int      @default(1)
+  unitPrice      Decimal  @db.Decimal(10, 2)
   customizations Json?
   productImage   String?
   productName    String
-  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product        Product @relation(fields: [productId], references: [id])
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 }
 
 model Cart {
