@@ -5,6 +5,80 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_MS = 10 * 60 * 1000;
+
+type LoginAttemptRecord = {
+  count: number;
+  lockedUntil: number | null;
+};
+
+const loginAttempts = new Map<string, LoginAttemptRecord>();
+
+function getClientIp(request: Request) {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0].trim();
+  }
+
+  return (
+    request.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
+function isLocked(identifier: string) {
+  const record = loginAttempts.get(identifier);
+
+  if (!record) {
+    return false;
+  }
+
+  if (
+    record.lockedUntil &&
+    record.lockedUntil > Date.now()
+  ) {
+    return true;
+  }
+
+  if (
+    record.lockedUntil &&
+    record.lockedUntil <= Date.now()
+  ) {
+    loginAttempts.delete(identifier);
+    return false;
+  }
+
+  return false;
+}
+
+function recordFailedAttempt(identifier: string) {
+  const now = Date.now();
+
+  const existing = loginAttempts.get(identifier);
+
+  const count = (existing?.count ?? 0) + 1;
+
+  if (count >= LOGIN_MAX_ATTEMPTS) {
+    loginAttempts.set(identifier, {
+      count,
+      lockedUntil: now + LOGIN_LOCKOUT_MS,
+    });
+
+    return;
+  }
+
+  loginAttempts.set(identifier, {
+    count,
+    lockedUntil: null,
+  });
+}
+
+function clearFailedAttempts(identifier: string) {
+  loginAttempts.delete(identifier);
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
  
  adapter: PrismaAdapter(prisma),
@@ -22,29 +96,52 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: {},
       },
 
-      async authorize(credentials) {
+      async authorize(credentials, request) {
   if (!credentials?.email || !credentials?.password) {
+    return null;
+  }
+
+  const email = String(credentials.email)
+    .trim()
+    .toLowerCase();
+
+  const ip = getClientIp(request);
+
+  const accountIdentifier = `account:${email}`;
+  const ipIdentifier = `ip:${ip}`;
+
+  if (
+    isLocked(accountIdentifier) ||
+    isLocked(ipIdentifier)
+  ) {
     return null;
   }
 
   const user = await prisma.user.findUnique({
     where: {
-      email: credentials.email as string,
+      email,
     },
   });
 
   if (!user || !user.password) {
+    recordFailedAttempt(accountIdentifier);
+    recordFailedAttempt(ipIdentifier);
     return null;
   }
 
   const validPassword = await bcrypt.compare(
-    credentials.password as string,
+    String(credentials.password),
     user.password
   );
 
   if (!validPassword) {
+    recordFailedAttempt(accountIdentifier);
+    recordFailedAttempt(ipIdentifier);
     return null;
   }
+
+  clearFailedAttempts(accountIdentifier);
+  clearFailedAttempts(ipIdentifier);
 
   return user;
 },
