@@ -148,7 +148,7 @@ export default function ProductDetailClient({
   const handleRemoveItem = async (id: string) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));
     try {
-      await fetch(`/api/cart?id=${id}`, { method: "DELETE" });
+      await fetch(`/api/cart/${id}`, { method: "DELETE" });
     } catch (error) {
       console.error("Failed to remove item", error);
     }
