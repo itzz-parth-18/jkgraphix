@@ -8,10 +8,16 @@ declare global {
 
 type Props = {
   shippingSaved: boolean;
+  name: string;
+  email: string;
+  phone: string;
 };
 
 export default function PaymentButton({
   shippingSaved,
+  name,
+  email,
+  phone,
 }: Props) {
   async function handlePayment() {
     if (!shippingSaved) {
@@ -30,6 +36,12 @@ export default function PaymentButton({
 
       const order = await response.json();
 
+console.log("Razorpay prefill:", {
+  name,
+  email,
+  contact: phone,
+});
+
       const razorpay = new window.Razorpay({
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
@@ -37,6 +49,12 @@ export default function PaymentButton({
         name: "JK Graphix",
         description: "Order Payment",
         order_id: order.id,
+
+prefill: {
+  name,
+  email,
+  contact: phone,
+},
 
         handler: async function (response: any) {
           const verifyResponse = await fetch(
@@ -59,7 +77,7 @@ if (result.success) {
 }
         },
 
-        prefill: {},
+      
 
         theme: {
           color: "#1F1816",

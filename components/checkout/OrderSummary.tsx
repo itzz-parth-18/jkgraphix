@@ -108,6 +108,9 @@ const subtotal =
 
 <PaymentButton
   shippingSaved={shippingSaved}
+  phone={cart?.phone ?? ""}
+  email={cart?.email ?? ""}
+  name={cart?.fullName ?? ""}
 />
 
 </div>
