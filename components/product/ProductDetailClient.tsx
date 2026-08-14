@@ -77,20 +77,38 @@ export default function ProductDetailClient({
   };
 
   const handleUpdateQuantity = async (id: string, newQty: number) => {
-    setCartItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity: newQty } : item))
-    );
+  if (newQty < 1) return;
 
-    try {
-      await fetch("/api/cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cartItemId: id, quantity: newQty }),
-      });
-    } catch (error) {
-      console.error("Failed to update quantity", error);
+  // Optimistic UI update
+  setCartItems((prev) =>
+    prev.map((item) =>
+      item.id === id
+        ? { ...item, quantity: newQty }
+        : item
+    )
+  );
+
+  try {
+    const response = await fetch(`/api/cart/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        quantity: newQty,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update cart quantity");
     }
-  };
+  } catch (error) {
+    console.error("Failed to update quantity", error);
+
+    // Re-fetch server state if update failed
+    await fetchCart();
+  }
+};
 
   const handleAddToCart = async () => {
     if (!validateCustomFields()) {
