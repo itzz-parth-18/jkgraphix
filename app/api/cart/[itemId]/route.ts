@@ -11,14 +11,10 @@ type Params = {
 export async function PATCH(
   request: NextRequest,
   { params }: Params
-) 
-
-
-
-{
+) {
   const session = await auth();
 
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
@@ -29,8 +25,23 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-
     const quantity = Math.max(1, Number(body.quantity));
+
+    const existingItem = await prisma.cartItem.findFirst({
+      where: {
+        id: itemId,
+        cart: {
+          userId: session.user.id,
+        },
+      },
+    });
+
+    if (!existingItem) {
+      return NextResponse.json(
+        { error: "Cart item not found" },
+        { status: 404 }
+      );
+    }
 
     const updatedItem = await prisma.cartItem.update({
       where: {
@@ -62,7 +73,7 @@ export async function DELETE(
 ) {
   const session = await auth();
 
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
@@ -72,6 +83,22 @@ export async function DELETE(
   const { itemId } = await params;
 
   try {
+    const existingItem = await prisma.cartItem.findFirst({
+      where: {
+        id: itemId,
+        cart: {
+          userId: session.user.id,
+        },
+      },
+    });
+
+    if (!existingItem) {
+      return NextResponse.json(
+        { error: "Cart item not found" },
+        { status: 404 }
+      );
+    }
+
     await prisma.cartItem.delete({
       where: {
         id: itemId,
