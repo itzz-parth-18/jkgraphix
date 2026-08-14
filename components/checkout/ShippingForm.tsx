@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 
 type Props = {
+  cart: any;
   onSaved: () => void;
 };
-
 type FormData = {
   fullName: string;
   phone: string;
@@ -20,44 +20,27 @@ type FormData = {
 };
 
 export default function ShippingForm({
+  cart,
   onSaved,
 }: Props) {
   const { data: session } = useSession();
 
   const [form, setForm] = useState<FormData>({
-    fullName: "",
-    phone: "",
-    email: "",
-    addressLine1: "",
-    addressLine2: "",
-    city: "",
-    state: "",
-    pinCode: "",
-    country: "India",
-  });
-
+  fullName: cart?.fullName ?? "",
+  phone: cart?.phone ?? "",
+  email: cart?.email ?? session?.user?.email ?? "",
+  addressLine1: cart?.addressLine1 ?? "",
+  addressLine2: cart?.addressLine2 ?? "",
+  city: cart?.city ?? "",
+  state: cart?.state ?? "",
+  pinCode: cart?.pinCode ?? "",
+  country: cart?.country ?? "India",
+});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    if (session?.user?.email) {
-      setForm((prev) => ({
-        ...prev,
-        email: session.user.email!,
-      }));
-    }
-
-    // NAYA: Product page se save kiya hua WhatsApp number yahan auto-fill ho jayega!
-    const savedWhatsapp = localStorage.getItem("checkout_whatsapp");
-    if (savedWhatsapp) {
-      setForm((prev) => ({
-        ...prev,
-        phone: savedWhatsapp,
-      }));
-    }
-  }, [session]);
-
+  
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement>
   ) {
