@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 10 * 60 * 1000;
@@ -129,17 +130,19 @@ export async function POST(request: Request) {
     }
 
     await prisma.contactInquiry.create({
-      data: {
-        name,
-        email,
-        message,
-      },
-    });
+  data: {
+    name,
+    email,
+    message,
+  },
+});
 
-    return NextResponse.json(
-      { success: true },
-      { status: 201 }
-    );
+revalidatePath("/admin/inquiries");
+
+return NextResponse.json(
+  { success: true },
+  { status: 201 }
+);
   } catch (error) {
     console.error(
       "Failed to save contact inquiry:",
