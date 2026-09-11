@@ -2,26 +2,55 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
 export default async function FeaturedCategories() {
-  let categories: { id: string; name: string; slug: string; imageUrl?: string | null }[] = [];
-  
+  let categories: {
+    id: string;
+    name: string;
+    slug: string;
+    imageUrl?: string | null;
+  }[] = [];
+
   try {
     categories = await (prisma as any).category.findMany({
-      where: { 
+      where: {
         isVisible: true,
-        isFeatured: true // Sirf Featured categories hi homepage par aayengi
+        isFeatured: true,
       },
-      orderBy: { displayOrder: "asc" }, 
-      take: 3, 
+      orderBy: { displayOrder: "asc" },
+      take: 3,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        imageUrl: true,
+      },
     });
   } catch (error) {
     // Fallback
   }
 
-  const displayCategories = categories.length > 0 ? categories : [
-    { id: "1", name: "Memory Boxes", slug: "shop", imageUrl: null },
-    { id: "2", name: "Keepsake Jewelry", slug: "shop", imageUrl: null },
-    { id: "3", name: "Custom Engravings", slug: "shop", imageUrl: null },
-  ];
+  const displayCategories =
+    categories.length > 0
+      ? categories
+      : [
+          {
+            id: "1",
+            name: "Memory Boxes",
+            slug: "shop",
+            imageUrl: null,
+          },
+          {
+            id: "2",
+            name: "Keepsake Jewelry",
+            slug: "shop",
+            imageUrl: null,
+          },
+          {
+            id: "3",
+            name: "Custom Engravings",
+            slug: "shop",
+            imageUrl: null,
+          },
+        ];
 
   return (
     <section className="py-20 px-6 max-w-6xl mx-auto">
@@ -29,6 +58,7 @@ export default async function FeaturedCategories() {
         <h2 className="text-3xl font-serif font-bold text-[#1F1816]">
           Shop by Category
         </h2>
+
         <p className="text-[#6E625C] mt-3 text-sm">
           Discover our handcrafted collections
         </p>
@@ -38,7 +68,10 @@ export default async function FeaturedCategories() {
         {displayCategories.map((cat, i) => {
           const categoryName = cat.name;
           const categoryLink = `/shop?category=${cat.slug || cat.id}`;
-          const categoryImage = cat.imageUrl || `https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop&sig=${i}`;
+
+          const categoryImage =
+            cat.imageUrl ||
+            `https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop&sig=${i}`;
 
           return (
             <Link

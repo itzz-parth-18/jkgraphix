@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import CustomizeModal from "./CustomizeModal";
 
@@ -47,7 +48,7 @@ export default function HeroClient({
             </p>
 
             <div className="flex flex-col items-center justify-center gap-4 pt-4 sm:flex-row lg:justify-start">
-              {/* NAYA: Button click hone par modal open hoga */}
+              {/* Customize button */}
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F1816] px-8 py-4 text-sm font-medium text-white shadow-md transition-all hover:bg-[#322724] active:scale-[0.99] sm:w-auto cursor-pointer"
@@ -69,9 +70,12 @@ export default function HeroClient({
           <div className="lg:col-span-5">
             <Link href={productUrl} className="block group">
               <div className="relative aspect-square overflow-hidden rounded-2xl border border-[#C89A84]/30 shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]">
-                <img
+                <Image
                   src={productImage}
                   alt={productName}
+                  fill
+                  priority
+                  sizes="(max-width: 1023px) 100vw, 42vw"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
 
@@ -82,6 +86,7 @@ export default function HeroClient({
                     <p className="font-serif text-sm font-semibold text-[#1F1816] truncate">
                       {productName}
                     </p>
+
                     <p className="text-xs text-[#6E625C] truncate">
                       Featured Collection
                     </p>
@@ -98,7 +103,10 @@ export default function HeroClient({
       </section>
 
       {/* Popup Modal Component */}
-      <CustomizeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <CustomizeModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </>
   );
 }

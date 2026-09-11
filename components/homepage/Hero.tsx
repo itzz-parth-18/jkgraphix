@@ -4,11 +4,17 @@ import HeroClient from "./HeroClient";
 export default async function Hero() {
   // Pehle check karenge ki admin ne kis product ko homepage ke liye select kiya hai
   let featuredProduct = await (prisma as any).product.findFirst({
-    where: { 
+    where: {
       status: "PUBLISHED",
-      showOnHomepage: true 
+      showOnHomepage: true,
     },
     orderBy: { updatedAt: "desc" },
+    select: {
+      slug: true,
+      name: true,
+      imageUrl: true,
+      basePrice: true,
+    },
   }).catch(() => null);
 
   // Agar koi explicitly select nahi hai, toh koi bhi latest published product utha lo
@@ -16,13 +22,29 @@ export default async function Hero() {
     featuredProduct = await (prisma as any).product.findFirst({
       where: { status: "PUBLISHED" },
       orderBy: { createdAt: "desc" },
+      select: {
+        slug: true,
+        name: true,
+        imageUrl: true,
+        basePrice: true,
+      },
     }).catch(() => null);
   }
 
-  const productUrl = featuredProduct ? `/shop/${featuredProduct.slug}` : "/shop";
-  const productName = featuredProduct?.name || "Premium Custom Gift";
-  const productImage = featuredProduct?.imageUrl || "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=1000&auto=format&fit=crop";
-  const productPrice = featuredProduct?.basePrice ? `₹${Number(featuredProduct.basePrice).toFixed(2)}` : "Made Just For You";
+  const productUrl = featuredProduct
+    ? `/shop/${featuredProduct.slug}`
+    : "/shop";
+
+  const productName =
+    featuredProduct?.name || "Premium Custom Gift";
+
+  const productImage =
+    featuredProduct?.imageUrl ||
+    "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=1000&auto=format&fit=crop";
+
+  const productPrice = featuredProduct?.basePrice
+    ? `₹${Number(featuredProduct.basePrice).toFixed(2)}`
+    : "Made Just For You";
 
   return (
     <HeroClient

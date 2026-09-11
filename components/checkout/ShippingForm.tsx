@@ -5,8 +5,9 @@ import { useSession } from "next-auth/react";
 
 type Props = {
   cart: any;
-  onSaved: () => void;
+  onSaved: (shippingCost: number) => void;
 };
+
 type FormData = {
   fullName: string;
   phone: string;
@@ -26,21 +27,21 @@ export default function ShippingForm({
   const { data: session } = useSession();
 
   const [form, setForm] = useState<FormData>({
-  fullName: cart?.fullName ?? "",
-  phone: cart?.phone ?? "",
-  email: cart?.email ?? session?.user?.email ?? "",
-  addressLine1: cart?.addressLine1 ?? "",
-  addressLine2: cart?.addressLine2 ?? "",
-  city: cart?.city ?? "",
-  state: cart?.state ?? "",
-  pinCode: cart?.pinCode ?? "",
-  country: cart?.country ?? "India",
-});
+    fullName: cart?.fullName ?? "",
+    phone: cart?.phone ?? "",
+    email: cart?.email ?? session?.user?.email ?? "",
+    addressLine1: cart?.addressLine1 ?? "",
+    addressLine2: cart?.addressLine2 ?? "",
+    city: cart?.city ?? "",
+    state: cart?.state ?? "",
+    pinCode: cart?.pinCode ?? "",
+    country: cart?.country ?? "India",
+  });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement>
   ) {
@@ -92,39 +93,42 @@ export default function ShippingForm({
 
     try {
       setLoading(true);
+      setError("");
+      setSuccess("");
 
       const response = await fetch(
         "/api/checkout/shipping",
         {
           method: "POST",
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(form),
         }
       );
 
-      const result =
-        await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
         setError(
           result.error ??
+            result.message ??
             "Failed to save shipping information."
         );
         return;
       }
 
       setSuccess(
-        "Shipping information saved."
+        result.shippingCost === 0
+          ? "Shipping information saved. Free shipping applied."
+          : `Shipping information saved. Shipping charge: ₹${Number(
+              result.shippingCost
+            ).toFixed(2)}`
       );
 
-      onSaved();
+      onSaved(Number(result.shippingCost ?? 0));
     } catch {
-      setError(
-        "Something went wrong."
-      );
+      setError("Something went wrong.");
     } finally {
       setLoading(false);
     }

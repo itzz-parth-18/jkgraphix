@@ -11,11 +11,18 @@ export default async function FeaturedProducts() {
         status: "PUBLISHED",
         OR: [
           { showOnHomepage: true },
-          { isFeatured: true }
-        ]
+          { isFeatured: true },
+        ],
       },
       take: 4,
       orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        imageUrl: true,
+        basePrice: true,
+      },
     });
 
     // Agar featured products kam hain, toh baki published products se fill kar do
@@ -23,11 +30,21 @@ export default async function FeaturedProducts() {
       const extraProducts = await (prisma as any).product.findMany({
         where: {
           status: "PUBLISHED",
-          id: { notIn: products.map((p: any) => p.id) }
+          id: {
+            notIn: products.map((p: any) => p.id),
+          },
         },
         take: 4 - products.length,
         orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          imageUrl: true,
+          basePrice: true,
+        },
       });
+
       products = [...products, ...extraProducts];
     }
   } catch (error) {
@@ -40,20 +57,30 @@ export default async function FeaturedProducts() {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-12">
             <div>
-              <h2 className="text-3xl font-serif font-bold text-[#1F1816]">Featured Products</h2>
-              <p className="text-[#6E625C] mt-3 text-sm">Our most loved personalized pieces</p>
+              <h2 className="text-3xl font-serif font-bold text-[#1F1816]">
+                Featured Products
+              </h2>
+
+              <p className="text-[#6E625C] mt-3 text-sm">
+                Our most loved personalized pieces
+              </p>
             </div>
-            <Link href="/shop" className="hidden sm:flex items-center gap-2 text-sm font-medium text-[#C89A84] hover:text-[#1F1816] transition">
+
+            <Link
+              href="/shop"
+              className="hidden sm:flex items-center gap-2 text-sm font-medium text-[#C89A84] hover:text-[#1F1816] transition"
+            >
               View All
             </Link>
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            
             {products.length === 0 ? (
               <div className="col-span-full rounded-2xl border border-dashed border-[#C89A84]/40 p-10 text-center">
                 <h3 className="text-lg font-semibold text-[#1F1816]">
                   No featured products available
                 </h3>
+
                 <p className="mt-2 text-sm text-[#6E625C]">
                   Products will appear here once they are published.
                 </p>
@@ -67,7 +94,10 @@ export default async function FeaturedProducts() {
                 >
                   <div className="aspect-square relative overflow-hidden">
                     <img
-                      src={product.imageUrl || "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop"}
+                      src={
+                        product.imageUrl ||
+                        "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop"
+                      }
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -79,7 +109,10 @@ export default async function FeaturedProducts() {
                     </h4>
 
                     <p className="text-[#C89A84] text-sm font-medium mt-2">
-                      ₹{product.basePrice ? Number(product.basePrice).toFixed(2) : "0.00"}
+                      ₹
+                      {product.basePrice
+                        ? Number(product.basePrice).toFixed(2)
+                        : "0.00"}
                     </p>
                   </div>
                 </Link>

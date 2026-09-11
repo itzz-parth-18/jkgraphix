@@ -8,6 +8,7 @@ declare global {
 
 type Props = {
   shippingSaved: boolean;
+  shippingCost: number;
   name: string;
   email: string;
   phone: string;
@@ -15,6 +16,7 @@ type Props = {
 
 export default function PaymentButton({
   shippingSaved,
+  shippingCost,
   name,
   email,
   phone,
@@ -24,23 +26,37 @@ export default function PaymentButton({
       return;
     }
 
+    /*
+     * shippingCost is received from the checkout UI for consistency,
+     * but it is NOT trusted for payment calculation.
+     *
+     * The server calculates the final shipping cost again from the
+     * authenticated user's cart and saved PIN code.
+     */
+    if (!Number.isFinite(shippingCost) || shippingCost < 0) {
+      return;
+    }
+
     try {
-      const response = await fetch("/api/payment/create-order", {
-        method: "POST",
-      });
+      const response = await fetch(
+        "/api/payment/create-order",
+        {
+          method: "POST",
+        }
+      );
 
       if (!response.ok) {
-  window.location.href = "/checkout/failed";
-  return;
-}
+        window.location.href = "/checkout/failed";
+        return;
+      }
 
       const order = await response.json();
 
-console.log("Razorpay prefill:", {
-  name,
-  email,
-  contact: phone,
-});
+      console.log("Razorpay prefill:", {
+        name,
+        email,
+        contact: phone,
+      });
 
       const razorpay = new window.Razorpay({
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -50,11 +66,11 @@ console.log("Razorpay prefill:", {
         description: "Order Payment",
         order_id: order.id,
 
-prefill: {
-  name,
-  email,
-  contact: phone,
-},
+        prefill: {
+          name,
+          email,
+          contact: phone,
+        },
 
         handler: async function (response: any) {
           const verifyResponse = await fetch(
@@ -68,16 +84,17 @@ prefill: {
             }
           );
 
-          const result = await verifyResponse.json();
+          const result =
+            await verifyResponse.json();
 
-if (result.success) {
-  window.location.href = `/checkout/success?order=${result.orderNumber}`;
-} else {
-  window.location.href = "/checkout/failed";
-}
+          if (result.success) {
+            window.location.href =
+              `/checkout/success?order=${result.orderNumber}`;
+          } else {
+            window.location.href =
+              "/checkout/failed";
+          }
         },
-
-      
 
         theme: {
           color: "#1F1816",
@@ -86,9 +103,9 @@ if (result.success) {
 
       razorpay.open();
     } catch (error) {
-  console.error(error);
-  window.location.href = "/checkout/failed";
-}
+      console.error(error);
+      window.location.href = "/checkout/failed";
+    }
   }
 
   return (

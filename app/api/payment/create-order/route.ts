@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getCart } from "@/lib/cart";
 import { prisma } from "@/lib/prisma";
 import { razorpay } from "@/lib/razorpay";
+import { calculateShippingCost } from "@/lib/shipping";
 import { PaymentStatus, OrderStatus, Prisma } from "@prisma/client";
 
 function generateOrderNumber() {
@@ -41,11 +42,48 @@ export async function POST() {
       0
     );
 
-    const shippingCost = 0;
+    if (!Number.isFinite(subtotal) || subtotal <= 0) {
+      return NextResponse.json(
+        { error: "Invalid order amount." },
+        { status: 400 }
+      );
+    }
+
+    /*
+     * Shipping is calculated again on the server.
+     *
+     * The client-side shipping amount is never trusted for payment.
+     * This prevents the final Razorpay amount from being manipulated
+     * from the browser.
+     */
+    if (!cart.pinCode) {
+      return NextResponse.json(
+        { error: "Shipping information is incomplete." },
+        { status: 400 }
+      );
+    }
+
+    let shippingCost: number;
+
+    try {
+      shippingCost = calculateShippingCost(
+        subtotal,
+        cart.pinCode
+      );
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid shipping PIN Code." },
+        { status: 400 }
+      );
+    }
+
     const totalAmount = subtotal + shippingCost;
     const amountInPaise = Math.round(totalAmount * 100);
 
-    if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
+    if (
+      !Number.isFinite(amountInPaise) ||
+      amountInPaise <= 0
+    ) {
       return NextResponse.json(
         { error: "Invalid order amount." },
         { status: 400 }
@@ -89,8 +127,13 @@ export async function POST() {
     /*
      * Create the internal order first.
      *
-     * This gives us a server-side record that binds:
-     * authenticated user <-> internal order <-> expected amount
+     * This binds:
+     * authenticated user
+     * <-> internal order
+     * <-> server-calculated subtotal
+     * <-> server-calculated shipping
+     * <-> expected payment amount
+     *
      * before Razorpay checkout begins.
      */
     const pendingOrder = await prisma.order.create({

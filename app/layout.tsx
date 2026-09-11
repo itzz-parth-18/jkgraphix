@@ -7,7 +7,8 @@ import { ourFileRouter } from "@/app/api/uploadthing/core";
 import Footer from "@/components/Footer";
 import AuthSessionProvider from "@/components/providers/SessionProvider";
 import Script from "next/script";
-import WhatsAppFloat from "@/components/layout/WhatsAppFloat"; // Naya WhatsApp floating button import kiya
+import WhatsAppFloat from "@/components/layout/WhatsAppFloat";
+import NavigationProgress from "@/components/layout/NavigationProgress";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,24 +21,29 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://jkgraphix.com'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://jkgraphix.com"
+  ),
   title: {
     default: "JK Graphix — Custom Printing & Design Solutions",
     template: "%s | JK Graphix",
   },
-  description: "Professional custom printing, business branding, and design solutions by JK Graphix.",
+  description:
+    "Professional custom printing, business branding, and design solutions by JK Graphix.",
   openGraph: {
     type: "website",
     locale: "en_IN",
     url: "/",
     siteName: "JK Graphix",
     title: "JK Graphix — Custom Printing & Design Solutions",
-    description: "Professional custom printing, business branding, and design solutions.",
+    description:
+      "Professional custom printing, business branding, and design solutions.",
   },
   twitter: {
     card: "summary_large_image",
     title: "JK Graphix — Custom Printing & Design Solutions",
-    description: "Professional custom printing, business branding, and design solutions.",
+    description:
+      "Professional custom printing, business branding, and design solutions.",
   },
 };
 
@@ -52,6 +58,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col justify-between">
+        <NavigationProgress />
+
         <AuthSessionProvider>
           <div className="flex-grow">{children}</div>
 
