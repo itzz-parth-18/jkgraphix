@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
+const FALLBACK_IMAGE_URL =
+  "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop";
+
+function sanitizeImageUrl(url: string | null | undefined): string {
+  if (!url || url.startsWith("data:image")) {
+    return FALLBACK_IMAGE_URL;
+  }
+  return url;
+}
+
 export default async function FeaturedProducts() {
   let products: any[] = [];
 
@@ -94,10 +104,7 @@ export default async function FeaturedProducts() {
                 >
                   <div className="aspect-square relative overflow-hidden">
                     <img
-                      src={
-                        product.imageUrl ||
-                        "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop"
-                      }
+                      src={sanitizeImageUrl(product.imageUrl)}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />

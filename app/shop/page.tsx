@@ -28,6 +28,19 @@ type Props = {
 };
 
 const PAGE_SIZE = 12;
+const PRODUCT_CARD_DESCRIPTION_LENGTH = 180;
+const FALLBACK_IMAGE_URL =
+  "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500&auto=format&fit=crop&q=60";
+
+/**
+ * Strips raw base64 image data to prevent multi-megabyte payloads in the RSC stream.
+ */
+function sanitizeImageUrl(url: string | null | undefined): string {
+  if (!url || url.startsWith("data:image")) {
+    return FALLBACK_IMAGE_URL;
+  }
+  return url;
+}
 
 export default async function ShopPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -198,15 +211,24 @@ export default async function ShopPage({ searchParams }: Props) {
     Math.ceil(totalProducts / PAGE_SIZE)
   );
 
+  /*
+   * Format product fields safely:
+   * - Truncate long descriptions
+   * - Strip raw base64 image strings to eliminate payload bloat
+   */
   const formattedProducts = products.map((product: any) => ({
     id: product.id,
     name: product.name,
     slug: product.slug,
-    description: product.description,
+    description:
+      product.description?.length > PRODUCT_CARD_DESCRIPTION_LENGTH
+        ? `${product.description.slice(
+            0,
+            PRODUCT_CARD_DESCRIPTION_LENGTH
+          )}…`
+        : product.description ?? "",
     price: Number(product.basePrice),
-    imageUrl:
-      product.imageUrl ||
-      "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500&auto=format&fit=crop&q=60",
+    imageUrl: sanitizeImageUrl(product.imageUrl),
     category: product.category?.name || "Uncategorized",
     categoryType: product.category?.type,
   }));
