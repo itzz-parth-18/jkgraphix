@@ -28,6 +28,7 @@ type Props = {
 };
 
 const PAGE_SIZE = 12;
+const PRODUCT_CARD_DESCRIPTION_LENGTH = 180;
 
 export default async function ShopPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -198,11 +199,22 @@ export default async function ShopPage({ searchParams }: Props) {
     Math.ceil(totalProducts / PAGE_SIZE)
   );
 
+  /*
+   * Product cards only display a short description.
+   * Keep the full description in the database/search query,
+   * but avoid sending unnecessarily large descriptions to the client.
+   */
   const formattedProducts = products.map((product: any) => ({
     id: product.id,
     name: product.name,
     slug: product.slug,
-    description: product.description,
+    description:
+      product.description?.length > PRODUCT_CARD_DESCRIPTION_LENGTH
+        ? `${product.description.slice(
+            0,
+            PRODUCT_CARD_DESCRIPTION_LENGTH
+          )}…`
+        : product.description ?? "",
     price: Number(product.basePrice),
     imageUrl:
       product.imageUrl ||
