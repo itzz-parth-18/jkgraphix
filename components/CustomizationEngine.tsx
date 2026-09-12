@@ -38,9 +38,9 @@ export default function CustomizationEngine({
   const { data: session, status: sessionStatus } = useSession();
 
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [imagePreviews, setImagePreviews] = useState<Record<string, string>>(
-    {}
-  );
+  const [imagePreviews, setImagePreviews] = useState<
+    Record<string, string>
+  >({});
 
   const handleInputChange = (fieldId: string, value: any) => {
     const updated = { ...formData, [fieldId]: value };
@@ -54,11 +54,13 @@ export default function CustomizationEngine({
 
   const removeImage = (fieldId: string) => {
     const updatedPreviews = { ...imagePreviews };
+
     delete updatedPreviews[fieldId];
 
     setImagePreviews(updatedPreviews);
 
     const updatedData = { ...formData };
+
     delete updatedData[fieldId];
 
     setFormData(updatedData);
@@ -69,13 +71,13 @@ export default function CustomizationEngine({
   };
 
   return (
-    <div className="bg-cream-dark/50 border border-taupe-border rounded-2xl p-6 space-y-6 shadow-sm">
-      <div className="border-b border-taupe-border/60 pb-4">
-        <h3 className="font-serif text-xl font-medium text-espresso">
+    <div className="space-y-5 rounded-2xl border border-taupe-border bg-cream-dark/50 p-4 shadow-sm sm:space-y-6 sm:p-6">
+      <div className="border-b border-taupe-border/60 pb-3 sm:pb-4">
+        <h3 className="font-serif text-lg font-medium text-espresso sm:text-xl">
           Personalize Your Order
         </h3>
 
-        <p className="text-xs text-taupe mt-1">
+        <p className="mt-1 text-xs leading-relaxed text-taupe">
           Handcrafted specifically for you. Please double check spelling and
           details.
         </p>
@@ -85,16 +87,17 @@ export default function CustomizationEngine({
         {fields.map((field) => {
           return (
             <div key={field.id} className="space-y-2">
-              <label className="flex items-center justify-between text-sm font-medium text-espresso">
-                <span>
+              <label className="flex items-start justify-between gap-3 text-sm font-medium text-espresso">
+                <span className="min-w-0">
                   {field.label}
+
                   {field.isRequired && (
-                    <span className="text-rose-muted ml-1">*</span>
+                    <span className="ml-1 text-rose-muted">*</span>
                   )}
                 </span>
 
                 {field.maxLength && formData[field.id] && (
-                  <span className="text-xs text-taupe">
+                  <span className="shrink-0 text-xs text-taupe">
                     {formData[field.id].length}/{field.maxLength}
                   </span>
                 )}
@@ -106,29 +109,33 @@ export default function CustomizationEngine({
                   <input
                     type="text"
                     maxLength={field.maxLength}
-                    placeholder={field.placeholder || "Enter details..."}
+                    placeholder={
+                      field.placeholder || "Enter details..."
+                    }
                     value={formData[field.id] || ""}
                     onChange={(e) =>
                       handleInputChange(field.id, e.target.value)
                     }
-                    className="w-full px-4 py-3 bg-white border border-taupe-border rounded-xl text-sm text-espresso placeholder:text-taupe-light focus:outline-none focus:ring-2 focus:ring-rose/50 transition"
+                    className="w-full rounded-xl border border-taupe-border bg-white px-3 py-3 pr-10 text-sm text-espresso placeholder:text-taupe-light transition focus:outline-none focus:ring-2 focus:ring-rose/50 sm:px-4"
                   />
 
-                  <Type className="w-4 h-4 text-taupe-light absolute right-3 top-3.5" />
+                  <Type className="pointer-events-none absolute right-3 top-3.5 h-4 w-4 text-taupe-light" />
                 </div>
               )}
 
               {/* LONG TEXT INPUT */}
               {field.fieldType === "LONG_TEXT" && (
                 <textarea
-                  rows={3}
+                  rows={4}
                   maxLength={field.maxLength}
-                  placeholder={field.placeholder || "Write your message..."}
+                  placeholder={
+                    field.placeholder || "Write your message..."
+                  }
                   value={formData[field.id] || ""}
                   onChange={(e) =>
                     handleInputChange(field.id, e.target.value)
                   }
-                  className="w-full px-4 py-3 bg-white border border-taupe-border rounded-xl text-sm text-espresso placeholder:text-taupe-light focus:outline-none focus:ring-2 focus:ring-rose/50 transition resize-none"
+                  className="w-full resize-none rounded-xl border border-taupe-border bg-white px-3 py-3 text-sm text-espresso placeholder:text-taupe-light transition focus:outline-none focus:ring-2 focus:ring-rose/50 sm:px-4"
                 />
               )}
 
@@ -141,10 +148,10 @@ export default function CustomizationEngine({
                     onChange={(e) =>
                       handleInputChange(field.id, e.target.value)
                     }
-                    className="w-full px-4 py-3 bg-white border border-taupe-border rounded-xl text-sm text-espresso focus:outline-none focus:ring-2 focus:ring-rose/50 transition"
+                    className="w-full rounded-xl border border-taupe-border bg-white px-3 py-3 pr-10 text-sm text-espresso transition focus:outline-none focus:ring-2 focus:ring-rose/50 sm:px-4"
                   />
 
-                  <Calendar className="w-4 h-4 text-taupe-light absolute right-3 top-3.5 pointer-events-none" />
+                  <Calendar className="pointer-events-none absolute right-3 top-3.5 h-4 w-4 text-taupe-light" />
                 </div>
               )}
 
@@ -152,18 +159,18 @@ export default function CustomizationEngine({
               {field.fieldType === "IMAGE_UPLOAD" && (
                 <div>
                   {!imagePreviews[field.id] ? (
-                    <div className="border-2 border-dashed border-taupe-border hover:border-rose rounded-xl p-6 flex flex-col items-center justify-center bg-white transition hover:bg-rose-light/20">
+                    <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-taupe-border bg-white p-4 transition hover:border-rose hover:bg-rose-light/20 sm:p-6">
                       {sessionStatus === "loading" ? (
                         <span className="text-xs text-taupe">
                           Checking login status...
                         </span>
                       ) : !session ? (
                         <>
-                          <span className="text-xs font-medium text-espresso">
+                          <span className="text-center text-xs font-medium text-espresso">
                             Login required to upload photo
                           </span>
 
-                          <span className="text-[10px] text-taupe mt-1 mb-3">
+                          <span className="mb-3 mt-1 text-center text-[10px] text-taupe">
                             PNG, JPG up to 8MB
                           </span>
 
@@ -172,9 +179,11 @@ export default function CustomizationEngine({
                             onClick={() => {
                               window.location.href =
                                 "/login?callbackUrl=" +
-                                encodeURIComponent(window.location.pathname);
+                                encodeURIComponent(
+                                  window.location.pathname
+                                );
                             }}
-                            className="bg-[#1F1816] text-[#F9F6F2] font-medium text-xs px-5 py-2.5 rounded-xl hover:bg-[#322724] transition shadow-sm cursor-pointer"
+                            className="cursor-pointer rounded-xl bg-[#1F1816] px-5 py-2.5 text-xs font-medium text-[#F9F6F2] shadow-sm transition hover:bg-[#322724]"
                           >
                             Login to Upload Photo
                           </button>
@@ -190,9 +199,9 @@ export default function CustomizationEngine({
                               button:
                                 "bg-[#1F1816] text-[#F9F6F2] font-medium text-xs px-5 py-2.5 rounded-xl hover:bg-[#322724] transition shadow-sm cursor-pointer ut-readying:bg-gray-400",
                               container:
-                                "flex flex-col items-center justify-center gap-2 w-full",
+                                "flex w-full flex-col items-center justify-center gap-2",
                               allowedContent:
-                                "text-[10px] text-taupe mt-1",
+                                "mt-1 text-center text-[10px] text-taupe",
                             }}
                             onClientUploadComplete={(res) => {
                               if (res && res[0]) {
@@ -216,28 +225,28 @@ export default function CustomizationEngine({
                             }}
                           />
 
-                          <span className="text-[10px] text-taupe mt-1">
+                          <span className="mt-1 text-center text-[10px] text-taupe">
                             PNG, JPG up to 8MB
                           </span>
                         </>
                       )}
                     </div>
                   ) : (
-                    <div className="relative rounded-xl overflow-hidden border border-taupe-border bg-white p-2 flex items-center justify-between">
-                      <div className="flex items-center space-x-3 min-w-0">
+                    <div className="flex items-center justify-between gap-2 overflow-hidden rounded-xl border border-taupe-border bg-white p-2 sm:gap-3 sm:p-3">
+                      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                         <img
                           src={imagePreviews[field.id]}
                           alt="Uploaded photo"
-                          className="w-14 h-14 object-cover rounded-lg"
+                          className="h-12 w-12 shrink-0 rounded-lg object-cover sm:h-14 sm:w-14"
                         />
 
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-espresso flex items-center gap-1">
-                            <CheckCircle className="w-3.5 h-3.5 text-sage" />
+                          <p className="flex items-center gap-1 text-xs font-medium text-espresso">
+                            <CheckCircle className="h-3.5 w-3.5 shrink-0 text-sage" />
                             Photo Attached
                           </p>
 
-                          <p className="text-[11px] text-taupe truncate max-w-[180px]">
+                          <p className="mt-0.5 truncate text-[11px] text-taupe">
                             Uploaded successfully
                           </p>
                         </div>
@@ -246,10 +255,10 @@ export default function CustomizationEngine({
                       <button
                         type="button"
                         onClick={() => removeImage(field.id)}
-                        className="p-2 text-taupe hover:text-red-500 transition flex-shrink-0"
+                        className="flex shrink-0 items-center justify-center rounded-lg p-2 text-taupe transition hover:bg-rose-50 hover:text-red-500"
                         title="Remove photo"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   )}
@@ -258,7 +267,7 @@ export default function CustomizationEngine({
 
               {/* HELPER TEXT */}
               {field.helpText && (
-                <p className="text-[11px] text-taupe italic mt-1">
+                <p className="mt-1 text-[11px] italic leading-relaxed text-taupe">
                   {field.helpText}
                 </p>
               )}

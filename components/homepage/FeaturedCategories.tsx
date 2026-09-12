@@ -16,7 +16,7 @@ export default async function FeaturedCategories() {
         isFeatured: true,
       },
       orderBy: { displayOrder: "asc" },
-      take: 3,
+      take: 4,
       select: {
         id: true,
         name: true,
@@ -53,18 +53,18 @@ export default async function FeaturedCategories() {
         ];
 
   return (
-    <section className="py-20 px-6 max-w-6xl mx-auto">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl font-serif font-bold text-[#1F1816]">
+    <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+      <div className="mb-8 text-center sm:mb-12">
+        <h2 className="font-serif text-2xl font-bold text-[#1F1816] sm:text-3xl">
           Shop by Category
         </h2>
 
-        <p className="text-[#6E625C] mt-3 text-sm">
+        <p className="mt-2 text-sm text-[#6E625C] sm:mt-3">
           Discover our handcrafted collections
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
         {displayCategories.map((cat, i) => {
           const categoryName = cat.name;
           const categoryLink = `/shop?category=${cat.slug || cat.id}`;
@@ -77,7 +77,7 @@ export default async function FeaturedCategories() {
             <Link
               key={cat.id || i}
               href={categoryLink}
-              className="group relative h-64 overflow-hidden rounded-2xl border border-[#EFE8E2]"
+              className="group relative h-44 overflow-hidden rounded-2xl border border-[#EFE8E2] sm:h-52 md:h-64"
             >
               <div className="absolute inset-0 z-10 bg-[#1F1816]/20 transition-colors group-hover:bg-[#1F1816]/10" />
 
@@ -87,8 +87,8 @@ export default async function FeaturedCategories() {
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
 
-              <div className="absolute inset-0 z-20 flex items-center justify-center">
-                <h3 className="font-serif text-xl font-bold tracking-wide text-white drop-shadow-md">
+              <div className="absolute inset-0 z-20 flex items-center justify-center px-2">
+                <h3 className="text-center font-serif text-base font-bold tracking-wide text-white drop-shadow-md sm:text-lg md:text-xl">
                   {categoryName}
                 </h3>
               </div>

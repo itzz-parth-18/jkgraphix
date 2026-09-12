@@ -39,6 +39,7 @@ function sanitizeImageUrl(url: string | null | undefined): string {
   if (!url || url.startsWith("data:image")) {
     return FALLBACK_IMAGE_URL;
   }
+
   return url;
 }
 
@@ -251,92 +252,102 @@ export default async function ShopPage({ searchParams }: Props) {
     <div className="min-h-screen bg-[#F9F6F2]">
       <Navbar />
 
-      <main className="mx-auto max-w-[90rem] px-6 py-12">
+      <main className="mx-auto max-w-[90rem] px-4 py-6 sm:px-6 sm:py-8 lg:py-12">
         {/* ========================================= */}
         {/* VIEW 1: Main Hub (Side by Side QC and CR) */}
         {/* ========================================= */}
         {isMainHubView ? (
-          <div className="space-y-12">
-            <div className="text-center space-y-4 max-w-3xl mx-auto mb-10">
-              <h1 className="font-serif text-4xl md:text-5xl font-bold text-[#1F1816]">
+          <div className="space-y-8 sm:space-y-10 lg:space-y-12">
+            <div className="mx-auto mb-6 max-w-3xl space-y-3 text-center sm:mb-8 sm:space-y-4 lg:mb-10">
+              <h1 className="font-serif text-3xl font-bold text-[#1F1816] sm:text-4xl md:text-5xl">
                 Choose Your Experience
               </h1>
 
-              <p className="text-[#6E625C] text-lg">
+              <p className="text-sm leading-relaxed text-[#6E625C] sm:text-lg">
                 Whether you need a quick customized keepsake or a deeply
                 bespoke consultation with our artisans, we have the perfect
                 path for your gifting journey.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 items-start">
-              <section className="bg-white p-8 rounded-3xl border border-[#EFE8E2] shadow-sm space-y-8">
+            <div className="grid grid-cols-1 items-start gap-6 sm:gap-8 xl:grid-cols-2 xl:gap-12">
+              {/* ============================= */}
+              {/* QUICK CUSTOMIZATION */}
+              {/* ============================= */}
+              <section className="space-y-6 rounded-2xl border border-[#EFE8E2] bg-white p-4 shadow-sm sm:space-y-8 sm:rounded-3xl sm:p-8">
                 <div className="flex flex-col gap-4 border-b border-[#EFE8E2] pb-6">
                   <div className="flex items-center gap-2 text-[#C89A84]">
-                    <Zap className="w-5 h-5 fill-current" />
-                    <span className="font-bold tracking-wide uppercase text-sm">
+                    <Zap className="h-5 w-5 fill-current" />
+
+                    <span className="text-sm font-bold uppercase tracking-wide">
                       Quick Customization
                     </span>
                   </div>
 
-                  <h2 className="font-serif text-3xl font-bold text-[#1F1816]">
+                  <h2 className="font-serif text-2xl font-bold text-[#1F1816] sm:text-3xl">
                     Fast, Simple, and Beautiful
                   </h2>
 
-                  <p className="text-[#6E625C]">
+                  <p className="text-sm leading-relaxed text-[#6E625C] sm:text-base">
                     Select a design, upload your photos or text, and check out
                     instantly.
                   </p>
 
                   <Link
                     href="/shop?type=qc"
-                    className="self-start mt-2 group flex items-center gap-2 bg-transparent border border-[#C89A84] text-[#1F1816] px-6 py-2.5 rounded-xl hover:bg-[#EFE8E2] transition-all font-medium text-sm"
+                    className="group mt-1 flex w-fit items-center gap-2 rounded-xl border border-[#C89A84] bg-transparent px-4 py-2.5 text-sm font-medium text-[#1F1816] transition-all hover:bg-[#EFE8E2] sm:mt-2 sm:px-6"
                   >
                     View All QC Options
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </div>
 
                 {qcShowcase.length > 0 ? (
                   <ProductGrid products={qcShowcase} />
                 ) : (
-                  <p className="text-center text-[#6E625C] py-10">
+                  <p className="py-10 text-center text-[#6E625C]">
                     No items available.
                   </p>
                 )}
               </section>
 
-              <section className="bg-white p-8 rounded-3xl border border-[#EFE8E2] shadow-sm space-y-8">
+              {/* ============================= */}
+              {/* CONSULTATION REQUIRED */}
+              {/* ============================= */}
+              <section className="space-y-6 rounded-2xl border border-[#EFE8E2] bg-white p-4 shadow-sm sm:space-y-8 sm:rounded-3xl sm:p-8">
                 <div className="flex flex-col gap-4 border-b border-[#EFE8E2] pb-6">
                   <div className="flex items-center gap-2 text-[#C89A84]">
-                    <MessageSquare className="w-5 h-5 fill-current" />
-                    <span className="font-bold tracking-wide uppercase text-sm">
+                    <MessageSquare className="h-5 w-5 fill-current" />
+
+                    <span className="text-sm font-bold uppercase tracking-wide">
                       Consultation Required
                     </span>
                   </div>
 
-                  <h2 className="font-serif text-3xl font-bold text-[#1F1816]">
+                  <h2 className="font-serif text-2xl font-bold text-[#1F1816] sm:text-3xl">
                     Bespoke & Highly Custom
                   </h2>
 
-                  <p className="text-[#6E625C]">
+                  <p className="text-sm leading-relaxed text-[#6E625C] sm:text-base">
                     Have a complex vision? Share details and collaborate with
                     our artisans before paying.
                   </p>
 
                   <Link
                     href="/shop?type=cr"
-                    className="self-start mt-2 group flex items-center gap-2 bg-[#1F1816] text-white px-6 py-2.5 rounded-xl hover:bg-[#322724] transition-all font-medium text-sm shadow-md"
+                    className="group mt-1 flex w-fit items-center gap-2 rounded-xl bg-[#1F1816] px-4 py-2.5 text-sm font-medium text-white shadow-md transition-all hover:bg-[#322724] sm:mt-2 sm:px-6"
                   >
                     View All CR Options
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </div>
 
                 {crShowcase.length > 0 ? (
                   <ProductGrid products={crShowcase} />
                 ) : (
-                  <p className="text-center text-[#6E625C] py-10">
+                  <p className="py-10 text-center text-[#6E625C]">
                     No items available.
                   </p>
                 )}
@@ -347,66 +358,68 @@ export default async function ShopPage({ searchParams }: Props) {
           /* ========================================= */
           /* VIEW 2: Type Specific Page (QC or CR Flow) */
           /* ========================================= */
-          <div className="space-y-10">
+          <div className="space-y-6 sm:space-y-8 lg:space-y-10">
             {/* Header */}
-            <div className="text-center space-y-4 max-w-3xl mx-auto mb-8">
-              <h1 className="font-serif text-4xl font-bold text-[#1F1816]">
+            <div className="mx-auto mb-5 max-w-3xl space-y-3 text-center sm:mb-8 sm:space-y-4">
+              <h1 className="font-serif text-3xl font-bold text-[#1F1816] sm:text-4xl">
                 {type === "qc"
                   ? "Quick Customization"
                   : "Consultation Required"}
               </h1>
 
-              <p className="text-[#6E625C]">
+              <p className="text-sm leading-relaxed text-[#6E625C] sm:text-base">
                 {type === "qc"
                   ? "Select a category below to instantly customize your gift and checkout."
                   : "Select a category below. Share your requirements and we'll craft it together."}
               </p>
             </div>
 
-            {/* THE NEW CATEGORY BOXES ROW */}
-            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar hide-scrollbar snap-x">
-              {/* "All" Category Box */}
+            {/* Category Filters */}
+            <div className="flex snap-x gap-2 overflow-x-auto pb-2 hide-scrollbar sm:gap-4 sm:pb-4">
+              {/* All Category */}
               <Link
                 href={`/shop?type=${type}&category=all`}
-                className={`shrink-0 snap-start px-8 py-4 rounded-2xl border font-medium transition-all duration-300 ${
+                className={`shrink-0 snap-start rounded-2xl border px-4 py-2.5 font-medium transition-all duration-300 sm:px-8 sm:py-4 ${
                   selectedCategory === "all"
-                    ? "bg-[#1F1816] border-[#1F1816] text-white shadow-md"
-                    : "bg-white border-[#EFE8E2] text-[#6E625C] hover:border-[#C89A84] hover:text-[#1F1816]"
+                    ? "border-[#1F1816] bg-[#1F1816] text-white shadow-md"
+                    : "border-[#EFE8E2] bg-white text-[#6E625C] hover:border-[#C89A84] hover:text-[#1F1816]"
                 }`}
               >
                 All Products
               </Link>
 
               {/* Dynamic Database Category Boxes */}
-              {dbCategories.map((cat: { id: string; name: string }) => {
-                const isSelected =
-                  selectedCategory === cat.name.toLowerCase();
+              {dbCategories.map(
+                (cat: { id: string; name: string }) => {
+                  const isSelected =
+                    selectedCategory === cat.name.toLowerCase();
 
-                return (
-                  <Link
-                    key={cat.id}
-                    href={`/shop?type=${type}&category=${cat.name.toLowerCase()}`}
-                    className={`shrink-0 snap-start px-8 py-4 rounded-2xl border font-medium transition-all duration-300 ${
-                      isSelected
-                        ? "bg-[#1F1816] border-[#1F1816] text-white shadow-md"
-                        : "bg-white border-[#EFE8E2] text-[#6E625C] hover:border-[#C89A84] hover:text-[#1F1816]"
-                    }`}
-                  >
-                    {cat.name}
-                  </Link>
-                );
-              })}
+                  return (
+                    <Link
+                      key={cat.id}
+                      href={`/shop?type=${type}&category=${cat.name.toLowerCase()}`}
+                      className={`shrink-0 snap-start rounded-2xl border px-4 py-2.5 font-medium transition-all duration-300 sm:px-8 sm:py-4 ${
+                        isSelected
+                          ? "border-[#1F1816] bg-[#1F1816] text-white shadow-md"
+                          : "border-[#EFE8E2] bg-white text-[#6E625C] hover:border-[#C89A84] hover:text-[#1F1816]"
+                      }`}
+                    >
+                      {cat.name}
+                    </Link>
+                  );
+                }
+              )}
             </div>
 
-            {/* The Unified Product Grid */}
-            <div className="mt-8">
+            {/* Unified Product Grid */}
+            <div className="mt-5 sm:mt-8">
               {formattedProducts.length === 0 ? (
                 <EmptyState />
               ) : (
                 <>
                   <ProductGrid products={formattedProducts} />
 
-                  <div className="mt-12">
+                  <div className="mt-8 sm:mt-12">
                     <Pagination
                       currentPage={page}
                       totalPages={totalPages}

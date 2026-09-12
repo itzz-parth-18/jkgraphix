@@ -25,23 +25,25 @@ export default function Pagination({
   };
 
   return (
-    <div className="mt-10 flex items-center justify-center gap-3">
+    <div className="mt-8 flex items-center justify-center gap-2 sm:mt-10 sm:gap-3">
       <button
+        type="button"
         disabled={currentPage === 1}
         onClick={() => goToPage(currentPage - 1)}
-        className="rounded-lg border border-[#EFE8E2] px-4 py-2 text-sm disabled:opacity-50"
+        className="min-h-10 rounded-lg border border-[#EFE8E2] px-3 py-2 text-xs font-medium text-[#1F1816] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
       >
         Previous
       </button>
 
-      <span className="text-sm text-[#6E625C]">
+      <span className="whitespace-nowrap text-xs text-[#6E625C] sm:text-sm">
         Page {currentPage} of {totalPages}
       </span>
 
       <button
+        type="button"
         disabled={currentPage === totalPages}
         onClick={() => goToPage(currentPage + 1)}
-        className="rounded-lg border border-[#EFE8E2] px-4 py-2 text-sm disabled:opacity-50"
+        className="min-h-10 rounded-lg border border-[#EFE8E2] px-3 py-2 text-xs font-medium text-[#1F1816] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
       >
         Next
       </button>

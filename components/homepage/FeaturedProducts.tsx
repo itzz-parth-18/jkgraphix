@@ -62,72 +62,74 @@ export default async function FeaturedProducts() {
   }
 
   return (
-    <section>
-      <section className="py-20 bg-[#EFE8E2]/30 border-y border-[#EFE8E2] px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl font-serif font-bold text-[#1F1816]">
-                Featured Products
-              </h2>
+    <section className="border-y border-[#EFE8E2] bg-[#EFE8E2]/30 px-4 py-12 sm:px-6 sm:py-16">
+      <div className="mx-auto max-w-6xl">
+        {/* Section heading */}
+        <div className="mb-8 flex items-end justify-between gap-4 sm:mb-12">
+          <div>
+            <h2 className="font-serif text-2xl font-bold text-[#1F1816] sm:text-3xl">
+              Featured Products
+            </h2>
 
-              <p className="text-[#6E625C] mt-3 text-sm">
-                Our most loved personalized pieces
+            <p className="mt-2 text-sm text-[#6E625C] sm:mt-3">
+              Our most loved personalized pieces
+            </p>
+          </div>
+
+          <Link
+            href="/shop"
+            className="shrink-0 text-xs font-medium text-[#C89A84] transition hover:text-[#1F1816] sm:text-sm"
+          >
+            View All
+          </Link>
+        </div>
+
+        {/* Products */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
+          {products.length === 0 ? (
+            <div className="col-span-full rounded-2xl border border-dashed border-[#C89A84]/40 p-8 text-center sm:p-10">
+              <h3 className="text-base font-semibold text-[#1F1816] sm:text-lg">
+                No featured products available
+              </h3>
+
+              <p className="mt-2 text-xs text-[#6E625C] sm:text-sm">
+                Products will appear here once they are published.
               </p>
             </div>
+          ) : (
+            products.map((product: any) => (
+              <Link
+                key={product.id}
+                href={`/shop/${product.slug}`}
+                className="group block overflow-hidden rounded-2xl border border-[#EFE8E2] bg-white shadow-sm"
+              >
+                {/* Product image */}
+                <div className="relative aspect-square overflow-hidden">
+                  <img
+                    src={sanitizeImageUrl(product.imageUrl)}
+                    alt={product.name}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
 
-            <Link
-              href="/shop"
-              className="hidden sm:flex items-center gap-2 text-sm font-medium text-[#C89A84] hover:text-[#1F1816] transition"
-            >
-              View All
-            </Link>
-          </div>
+                {/* Product info */}
+                <div className="p-3 sm:p-4">
+                  <h4 className="truncate font-serif text-sm font-semibold text-[#1F1816]">
+                    {product.name}
+                  </h4>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {products.length === 0 ? (
-              <div className="col-span-full rounded-2xl border border-dashed border-[#C89A84]/40 p-10 text-center">
-                <h3 className="text-lg font-semibold text-[#1F1816]">
-                  No featured products available
-                </h3>
-
-                <p className="mt-2 text-sm text-[#6E625C]">
-                  Products will appear here once they are published.
-                </p>
-              </div>
-            ) : (
-              products.map((product: any) => (
-                <Link
-                  key={product.id}
-                  href={`/shop/${product.slug}`}
-                  className="bg-[#FFFFFF] rounded-2xl overflow-hidden border border-[#EFE8E2] shadow-sm group block"
-                >
-                  <div className="aspect-square relative overflow-hidden">
-                    <img
-                      src={sanitizeImageUrl(product.imageUrl)}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-
-                  <div className="p-4">
-                    <h4 className="font-serif font-semibold text-[#1F1816] text-sm truncate">
-                      {product.name}
-                    </h4>
-
-                    <p className="text-[#C89A84] text-sm font-medium mt-2">
-                      ₹
-                      {product.basePrice
-                        ? Number(product.basePrice).toFixed(2)
-                        : "0.00"}
-                    </p>
-                  </div>
-                </Link>
-              ))
-            )}
-          </div>
+                  <p className="mt-1.5 text-sm font-medium text-[#C89A84] sm:mt-2">
+                    ₹
+                    {product.basePrice
+                      ? Number(product.basePrice).toFixed(2)
+                      : "0.00"}
+                  </p>
+                </div>
+              </Link>
+            ))
+          )}
         </div>
-      </section>
+      </div>
     </section>
   );
 }

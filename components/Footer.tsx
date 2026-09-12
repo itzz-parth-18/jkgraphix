@@ -23,166 +23,206 @@ export default async function Footer() {
   const instagramUrl = getSetting("INSTAGRAM_URL") || "https://instagram.com";
   const whatsappNum = getSetting("WHATSAPP_NUMBER") || "917978658304";
   const supportEmail =
-    getSetting("SUPPORT_EMAIL") || "support.jkgraphix@gmail.com";
+    getSetting("SUPPORT_EMAIL") ||
+    "support.jkgraphix@gmail.com";
 
   return (
-    <footer className="bg-[#1F1816] text-[#F9F6F2] border-t border-[#322724] pt-16 pb-12 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 pb-16 border-b border-[#322724]/60">
-          
-          {/* Logo & About */}
-          <div className="space-y-4">
-            <Link href="/" className="inline-flex items-center gap-3 group">
-              <div className="h-10 w-10 rounded-xl bg-[#C89A84] text-[#1F1816] flex items-center justify-center font-serif font-bold text-sm shadow-md">
+    <footer className="border-t border-[#322724] bg-[#1F1816] pt-10 pb-8 text-[#F9F6F2] transition-colors duration-300 sm:pt-16 sm:pb-12">
+      <div className="mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8">
+
+        {/* Main Footer */}
+        <div className="border-b border-[#322724]/60 pb-8 sm:pb-12 lg:pb-16">
+
+          {/* Brand */}
+          <div className="mb-8 space-y-3 sm:mb-10 lg:hidden">
+            <Link
+              href="/"
+              className="group inline-flex items-center gap-2.5 sm:gap-3"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#C89A84] font-serif text-sm font-bold text-[#1F1816] shadow-md sm:h-10 sm:w-10">
                 JK
               </div>
 
-              <span className="font-serif text-2xl font-bold tracking-tight text-white group-hover:text-[#C89A84] transition-colors">
+              <span className="font-serif text-xl font-bold tracking-tight text-white transition-colors group-hover:text-[#C89A84] sm:text-2xl">
                 JK Graphix
               </span>
             </Link>
 
-            <p className="text-sm text-[#A3958E] leading-relaxed max-w-sm">
+            <p className="max-w-sm text-xs leading-5 text-[#A3958E] sm:text-sm sm:leading-relaxed">
               Custom Perfection, Tailored to Your Vision. Premium personalized
               heirlooms and custom keepsakes designed to last generations.
             </p>
           </div>
 
-          {/* Quick Links */}
-          <div className="space-y-4">
-            <h3 className="font-serif text-lg font-semibold tracking-wide text-white">
-              Quick Links
-            </h3>
+          {/* Desktop + Mobile Columns */}
+          <div className="grid grid-cols-3 gap-x-4 sm:gap-x-8 lg:grid-cols-4 lg:gap-x-0">
 
-            <ul className="space-y-3 text-sm">
-              <li>
-                <Link
-                  href="/shop"
-                  className="text-[#A3958E] hover:text-[#C89A84] transition-colors"
-                >
-                  Shop
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/about"
-                  className="text-[#A3958E] hover:text-[#C89A84] transition-colors"
-                >
-                  About
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-[#A3958E] hover:text-[#C89A84] transition-colors"
-                >
-                  Contact
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/faq"
-                  className="text-[#A3958E] hover:text-[#C89A84] transition-colors"
-                >
-                  FAQ
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Customer Support */}
-          <div className="space-y-4">
-            <h3 className="font-serif text-lg font-semibold tracking-wide text-white">
-              Customer Support
-            </h3>
-
-            <ul className="space-y-3 text-sm">
-              <li>
-                <Link
-                  href="/shipping"
-                  className="text-[#A3958E] hover:text-[#C89A84] transition-colors"
-                >
-                  Shipping Policy
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/refund"
-                  className="text-[#A3958E] hover:text-[#C89A84] transition-colors"
-                >
-                  Refund Policy
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/privacy"
-                  className="text-[#A3958E] hover:text-[#C89A84] transition-colors"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-[#A3958E] hover:text-[#C89A84] transition-colors"
-                >
-                  Terms & Conditions
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Connect */}
-          <div className="space-y-4">
-            <h3 className="font-serif text-lg font-semibold tracking-wide text-white">
-              Connect
-            </h3>
-
-            <div className="flex flex-col space-y-3 text-sm">
-              <a
-                href={instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 text-[#A3958E] hover:text-[#C89A84] transition-colors"
+            {/* Logo & About — Desktop only */}
+            <div className="hidden space-y-4 lg:block lg:pr-12">
+              <Link
+                href="/"
+                className="group inline-flex items-center gap-3"
               >
-                <span className="w-4 h-4 text-[#C89A84] font-bold">IG</span>
-                <span>Instagram</span>
-              </a>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#C89A84] font-serif text-sm font-bold text-[#1F1816] shadow-md">
+                  JK
+                </div>
 
-              <a
-                href={`https://wa.me/${whatsappNum}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 text-[#A3958E] hover:text-[#C89A84] transition-colors"
-              >
-                <span className="w-4 h-4 text-[#C89A84] font-bold">WA</span>
-                <span>WhatsApp</span>
-              </a>
+                <span className="font-serif text-2xl font-bold tracking-tight text-white transition-colors group-hover:text-[#C89A84]">
+                  JK Graphix
+                </span>
+              </Link>
 
-              <a
-                href={`mailto:${supportEmail}`}
-                className="flex items-center gap-3 text-[#A3958E] hover:text-[#C89A84] transition-colors"
-              >
-                <span className="w-4 h-4 text-[#C89A84] font-bold">@</span>
-                <span>Email Support</span>
-              </a>
+              <p className="max-w-sm text-sm leading-relaxed text-[#A3958E]">
+                Custom Perfection, Tailored to Your Vision. Premium personalized
+                heirlooms and custom keepsakes designed to last generations.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div className="min-w-0 space-y-3 lg:px-8">
+              <h3 className="font-serif text-[13px] font-semibold leading-4 tracking-wide text-white sm:text-lg sm:leading-5">
+                Quick Links
+              </h3>
+
+              <ul className="space-y-2 text-[12px] leading-5 sm:space-y-3 sm:text-sm">
+                <li>
+                  <Link
+                    href="/shop"
+                    className="text-[#A3958E] transition-colors hover:text-[#C89A84]"
+                  >
+                    Shop
+                  </Link>
+                </li>
+
+                <li>
+                  <Link
+                    href="/about"
+                    className="text-[#A3958E] transition-colors hover:text-[#C89A84]"
+                  >
+                    About
+                  </Link>
+                </li>
+
+                <li>
+                  <Link
+                    href="/contact"
+                    className="text-[#A3958E] transition-colors hover:text-[#C89A84]"
+                  >
+                    Contact
+                  </Link>
+                </li>
+
+                <li>
+                  <Link
+                    href="/faq"
+                    className="text-[#A3958E] transition-colors hover:text-[#C89A84]"
+                  >
+                    FAQ
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Customer Support */}
+            <div className="min-w-0 space-y-3 lg:px-8">
+              <h3 className="font-serif text-[13px] font-semibold leading-4 tracking-wide text-white sm:text-lg sm:leading-5">
+                Customer Support
+              </h3>
+
+              <ul className="space-y-2 text-[12px] leading-5 sm:space-y-3 sm:text-sm">
+                <li>
+                  <Link
+                    href="/shipping"
+                    className="text-[#A3958E] transition-colors hover:text-[#C89A84]"
+                  >
+                    Shipping Policy
+                  </Link>
+                </li>
+
+                <li>
+                  <Link
+                    href="/refund"
+                    className="text-[#A3958E] transition-colors hover:text-[#C89A84]"
+                  >
+                    Refund Policy
+                  </Link>
+                </li>
+
+                <li>
+                  <Link
+                    href="/privacy"
+                    className="text-[#A3958E] transition-colors hover:text-[#C89A84]"
+                  >
+                    Privacy Policy
+                  </Link>
+                </li>
+
+                <li>
+                  <Link
+                    href="/terms"
+                    className="text-[#A3958E] transition-colors hover:text-[#C89A84]"
+                  >
+                    Terms & Conditions
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Connect */}
+            <div className="min-w-0 space-y-3 lg:px-8">
+              <h3 className="font-serif text-[13px] font-semibold leading-4 tracking-wide text-white sm:text-lg sm:leading-5">
+                Connect
+              </h3>
+
+              <div className="flex flex-col gap-2.5 text-[12px] leading-5 sm:gap-3 sm:text-sm">
+                <a
+                  href={instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-[#A3958E] transition-colors hover:text-[#C89A84]"
+                >
+                  <span className="shrink-0 font-bold text-[#C89A84]">
+                    IG
+                  </span>
+                  <span className="whitespace-nowrap">Instagram</span>
+                </a>
+
+                <a
+                  href={`https://wa.me/${whatsappNum}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-[#A3958E] transition-colors hover:text-[#C89A84]"
+                >
+                  <span className="shrink-0 font-bold text-[#C89A84]">
+                    WA
+                  </span>
+                  <span className="whitespace-nowrap">WhatsApp</span>
+                </a>
+
+                <a
+                  href={`mailto:${supportEmail}`}
+                  className="flex items-center gap-2 text-[#A3958E] transition-colors hover:text-[#C89A84]"
+                >
+                  <span className="shrink-0 font-bold text-[#C89A84]">
+                    @
+                  </span>
+                  <span className="whitespace-nowrap">Email</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#A3958E]">
+        {/* Bottom */}
+        <div className="flex flex-col items-center justify-between gap-2.5 pt-5 text-center text-[10px] leading-4 text-[#A3958E] sm:flex-row sm:gap-4 sm:pt-8 sm:text-xs sm:text-left">
           <p>© 2026 JK Graphix. All Rights Reserved.</p>
 
-          <p className="flex items-center gap-1.5">
-            Designed with{" "}
-            <Heart className="w-3.5 h-3.5 text-[#C89A84] fill-[#C89A84]" /> for
-            creating unforgettable memories.
+          <p className="flex items-center justify-center gap-1.5">
+            <span>Designed with</span>
+
+            <Heart className="h-3.5 w-3.5 shrink-0 fill-[#C89A84] text-[#C89A84]" />
+
+            <span>for creating unforgettable memories.</span>
           </p>
         </div>
       </div>

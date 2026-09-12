@@ -134,92 +134,129 @@ export default function ShippingForm({
     }
   }
 
+  const fields = [
+    {
+      label: "Full Name",
+      name: "fullName",
+    },
+    {
+      label: "Phone Number (WhatsApp)",
+      name: "phone",
+      inputMode: "numeric" as const,
+    },
+    {
+      label: "Email",
+      name: "email",
+      type: "email",
+      inputMode: "email" as const,
+    },
+    {
+      label: "Address Line 1",
+      name: "addressLine1",
+    },
+    {
+      label: "Address Line 2",
+      name: "addressLine2",
+    },
+    {
+      label: "City",
+      name: "city",
+    },
+    {
+      label: "State",
+      name: "state",
+    },
+    {
+      label: "PIN Code",
+      name: "pinCode",
+      inputMode: "numeric" as const,
+    },
+    {
+      label: "Country",
+      name: "country",
+    },
+  ];
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-6"
-    >
-      <h2 className="text-2xl font-semibold text-[#1F1816]">
-        Shipping Information
-      </h2>
+    <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
+      <div className="border-b border-[#EFE8E2] pb-3 sm:pb-4">
+        <h2 className="text-xl font-semibold text-[#1F1816] sm:text-2xl">
+          Shipping Information
+        </h2>
+
+        <p className="mt-1 text-xs leading-relaxed text-[#6E625C] sm:text-sm">
+          Enter your delivery details carefully.
+        </p>
+      </div>
 
       {error && (
-        <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">
+        <div
+          role="alert"
+          className="rounded-xl bg-red-50 p-3 text-xs leading-relaxed text-red-600 sm:text-sm"
+        >
           {error}
         </div>
       )}
 
       {success && (
-        <div className="rounded-xl bg-green-50 p-3 text-sm text-green-700">
+        <div
+          role="status"
+          className="rounded-xl bg-green-50 p-3 text-xs leading-relaxed text-green-700 sm:text-sm"
+        >
           {success}
         </div>
       )}
 
-      {[
-        {
-          label: "Full Name",
-          name: "fullName",
-        },
-        {
-          label: "Phone Number (WhatsApp)",
-          name: "phone",
-        },
-        {
-          label: "Email",
-          name: "email",
-        },
-        {
-          label: "Address Line 1",
-          name: "addressLine1",
-        },
-        {
-          label: "Address Line 2",
-          name: "addressLine2",
-        },
-        {
-          label: "City",
-          name: "city",
-        },
-        {
-          label: "State",
-          name: "state",
-        },
-        {
-          label: "PIN Code",
-          name: "pinCode",
-        },
-        {
-          label: "Country",
-          name: "country",
-        },
-      ].map((field) => (
-        <div key={field.name}>
-          <label className="mb-2 block text-sm font-medium text-[#2C2320]">
-            {field.label}
-          </label>
+      <div className="space-y-4 sm:space-y-5">
+        {fields.map((field) => (
+          <div key={field.name}>
+            <label
+              htmlFor={field.name}
+              className="mb-1.5 block text-xs font-medium text-[#2C2320] sm:mb-2 sm:text-sm"
+            >
+              {field.label}
+            </label>
 
-          <input
-            type="text"
-            name={field.name}
-            value={
-              form[
-                field.name as keyof FormData
-              ]
-            }
-            onChange={handleChange}
-            className="w-full rounded-xl border border-[#D8CFC8] bg-white px-4 py-3 outline-none focus:border-[#2C2320]"
-          />
-        </div>
-      ))}
+            <input
+              id={field.name}
+              type={field.type ?? "text"}
+              name={field.name}
+              value={
+                form[field.name as keyof FormData]
+              }
+              onChange={handleChange}
+              inputMode={field.inputMode}
+              autoComplete={
+                field.name === "fullName"
+                  ? "name"
+                  : field.name === "phone"
+                  ? "tel"
+                  : field.name === "email"
+                  ? "email"
+                  : field.name === "addressLine1"
+                  ? "street-address"
+                  : field.name === "city"
+                  ? "address-level2"
+                  : field.name === "state"
+                  ? "address-level1"
+                  : field.name === "pinCode"
+                  ? "postal-code"
+                  : field.name === "country"
+                  ? "country-name"
+                  : "off"
+              }
+              className="min-h-11 w-full rounded-xl border border-[#D8CFC8] bg-white px-3 py-2.5 text-sm text-[#2C2320] outline-none transition placeholder:text-[#9A8F88] focus:border-[#2C2320] focus:ring-1 focus:ring-[#2C2320]/10 sm:px-4 sm:py-3"
+            />
+          </div>
+        ))}
+      </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-xl bg-[#1F1816] px-6 py-3 text-white transition hover:bg-[#2C2320] disabled:cursor-not-allowed disabled:bg-gray-400"
+        className="min-h-12 w-full rounded-xl bg-[#1F1816] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#2C2320] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-gray-400"
       >
-        {loading
-          ? "Saving..."
-          : "Save & Continue"}
+        {loading ? "Saving..." : "Save & Continue"}
       </button>
     </form>
   );

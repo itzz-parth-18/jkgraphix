@@ -20,15 +20,17 @@ export default function CheckoutClient({
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-3">
-      <div className="lg:col-span-2 rounded-2xl border border-[#EFE8E2] bg-white p-8 shadow-sm">
+    <div className="grid gap-5 sm:gap-6 lg:grid-cols-3 lg:gap-8">
+      {/* Shipping */}
+      <div className="rounded-2xl border border-[#EFE8E2] bg-white p-4 shadow-sm sm:p-6 lg:col-span-2 lg:p-8">
         <ShippingForm
           cart={cart}
           onSaved={handleShippingSaved}
         />
       </div>
 
-      <div className="rounded-2xl border border-[#EFE8E2] bg-white p-8 shadow-sm">
+      {/* Order Summary */}
+      <div className="rounded-2xl border border-[#EFE8E2] bg-white p-4 shadow-sm sm:p-6 lg:p-8">
         <OrderSummary
           cart={cart}
           shippingSaved={shippingSaved}

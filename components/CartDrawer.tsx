@@ -106,18 +106,18 @@ export default function CartDrawer({
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-cream border-l border-taupe-border shadow-2xl flex flex-col">
+      <div className="fixed inset-y-0 right-0 flex max-w-full pl-0 sm:pl-6 lg:pl-10">
+        <div className="flex h-full w-screen max-w-md flex-col border-l border-taupe-border bg-cream shadow-2xl">
           {/* Header */}
-          <div className="p-6 border-b border-taupe-border/60 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <ShoppingBag className="w-5 h-5 text-espresso" />
+          <div className="flex items-center justify-between border-b border-taupe-border/60 p-4 sm:p-6">
+            <div className="flex min-w-0 items-center gap-2">
+              <ShoppingBag className="h-5 w-5 shrink-0 text-espresso" />
 
-              <h2 className="font-serif text-lg font-semibold text-espresso">
+              <h2 className="truncate font-serif text-base font-semibold text-espresso sm:text-lg">
                 Your Gift Cart
               </h2>
 
-              <span className="bg-rose-light text-espresso text-xs font-medium px-2 py-0.5 rounded-full">
+              <span className="shrink-0 rounded-full bg-rose-light px-2 py-0.5 text-xs font-medium text-espresso">
                 {items.length}
               </span>
             </div>
@@ -125,17 +125,18 @@ export default function CartDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="text-taupe hover:text-espresso transition p-1"
+              aria-label="Close cart"
+              className="ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-taupe transition hover:bg-white hover:text-espresso"
             >
-              <X className="w-5 h-5" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
           {/* Cart Items */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex-1 space-y-3 overflow-y-auto p-3 sm:space-y-4 sm:p-6">
             {items.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center space-y-3">
-                <ShoppingBag className="w-12 h-12 text-taupe-light" />
+              <div className="flex h-full flex-col items-center justify-center space-y-3 px-4 text-center">
+                <ShoppingBag className="h-12 w-12 text-taupe-light" />
 
                 <p className="font-serif text-lg text-espresso">
                   Your cart is currently empty
@@ -152,7 +153,7 @@ export default function CartDrawer({
                 return (
                   <div
                     key={item.id}
-                    className="flex gap-4 p-4 bg-white border border-taupe-border/60 rounded-xl items-center"
+                    className="flex min-w-0 items-center gap-3 rounded-xl border border-taupe-border/60 bg-white p-3 sm:gap-4 sm:p-4"
                   >
                     {/* Product Image */}
                     <img
@@ -161,13 +162,13 @@ export default function CartDrawer({
                         "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500&auto=format&fit=crop&q=60"
                       }
                       alt={item.name}
-                      className="w-16 h-16 object-cover rounded-lg border border-taupe-border/40 shrink-0"
+                      className="h-14 w-14 shrink-0 rounded-lg border border-taupe-border/40 object-cover sm:h-16 sm:w-16"
                     />
 
                     {/* Product Details */}
-                    <div className="flex-1 space-y-1 min-w-0">
-                      <div className="flex justify-between items-start">
-                        <h4 className="font-serif font-medium text-sm text-espresso truncate">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <div className="flex min-w-0 items-start justify-between gap-2">
+                        <h4 className="min-w-0 truncate font-serif text-sm font-medium text-espresso">
                           {item.name}
                         </h4>
 
@@ -175,9 +176,10 @@ export default function CartDrawer({
                           type="button"
                           onClick={() => onRemoveItem(item.id)}
                           disabled={isUpdating}
-                          className="text-taupe-light hover:text-red-500 transition ml-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                          aria-label={`Remove ${item.name}`}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-taupe-light transition hover:bg-rose-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
 
@@ -186,20 +188,21 @@ export default function CartDrawer({
                       </p>
 
                       {/* Quantity Controls */}
-                      <div className="flex items-center gap-2 pt-1">
-                        <div className="inline-flex items-center border border-taupe-border rounded-lg bg-cream/30 px-2 py-0.5">
+                      <div className="flex min-w-0 items-center gap-2 pt-1">
+                        <div className="inline-flex shrink-0 items-center rounded-lg border border-taupe-border bg-cream/30">
                           <button
                             type="button"
                             disabled={
                               isUpdating || item.quantity <= 1
                             }
                             onClick={() => handleDecrease(item)}
-                            className="px-1.5 text-xs font-bold text-taupe hover:text-espresso cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            aria-label="Decrease quantity"
+                            className="flex h-8 w-8 items-center justify-center text-sm font-bold text-taupe transition hover:text-espresso disabled:cursor-not-allowed disabled:opacity-40"
                           >
-                            -
+                            −
                           </button>
 
-                          <span className="px-2 text-xs font-semibold text-espresso min-w-[24px] text-center">
+                          <span className="flex h-8 min-w-[28px] items-center justify-center px-1 text-xs font-semibold text-espresso">
                             {item.quantity}
                           </span>
 
@@ -207,14 +210,15 @@ export default function CartDrawer({
                             type="button"
                             disabled={isUpdating}
                             onClick={() => handleIncrease(item)}
-                            className="px-1.5 text-xs font-bold text-taupe hover:text-espresso cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            aria-label="Increase quantity"
+                            className="flex h-8 w-8 items-center justify-center text-sm font-bold text-taupe transition hover:text-espresso disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             +
                           </button>
                         </div>
 
                         {isUpdating && (
-                          <span className="text-[10px] text-taupe">
+                          <span className="truncate text-[10px] text-taupe">
                             Updating...
                           </span>
                         )}
@@ -228,7 +232,7 @@ export default function CartDrawer({
 
           {/* Order Summary */}
           {items.length > 0 && (
-            <div className="p-6 border-t border-taupe-border bg-white space-y-4">
+            <div className="space-y-3 border-t border-taupe-border bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:space-y-4 sm:p-6">
               <div className="space-y-2 text-xs text-taupe">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
@@ -238,7 +242,7 @@ export default function CartDrawer({
                   </span>
                 </div>
 
-                <div className="flex justify-between text-sm font-semibold text-espresso pt-2 border-t border-taupe-border/40">
+                <div className="flex justify-between border-t border-taupe-border/40 pt-2 text-sm font-semibold text-espresso">
                   <span>Total</span>
 
                   <span>₹{subtotal.toFixed(2)}</span>
@@ -250,10 +254,10 @@ export default function CartDrawer({
                 type="button"
                 disabled={updatingItems.size > 0}
                 onClick={handleProceedToCheckout}
-                className={`w-full py-3.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-soft transition ${
+                className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium shadow-soft transition ${
                   updatingItems.size > 0
-                    ? "bg-gray-400 cursor-not-allowed text-white"
-                    : "bg-espresso hover:bg-espresso-hover text-cream cursor-pointer active:scale-[0.99]"
+                    ? "cursor-not-allowed bg-gray-400 text-white"
+                    : "cursor-pointer bg-espresso text-cream hover:bg-espresso-hover active:scale-[0.99]"
                 }`}
               >
                 {updatingItems.size > 0
@@ -261,7 +265,7 @@ export default function CartDrawer({
                   : "Proceed to Checkout"}
 
                 {updatingItems.size === 0 && (
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="h-4 w-4" />
                 )}
               </button>
             </div>

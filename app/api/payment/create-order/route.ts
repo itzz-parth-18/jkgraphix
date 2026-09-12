@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getCart } from "@/lib/cart";
+import { getPaymentCart } from "@/lib/cart";
 import { prisma } from "@/lib/prisma";
 import { razorpay } from "@/lib/razorpay";
 import { calculateShippingCost } from "@/lib/shipping";
-import { PaymentStatus, OrderStatus, Prisma } from "@prisma/client";
+import {
+  PaymentStatus,
+  OrderStatus,
+  Prisma,
+} from "@prisma/client";
 
 function generateOrderNumber() {
   return `JKG-${new Date()
@@ -16,8 +20,17 @@ function generateOrderNumber() {
 }
 
 export async function POST() {
+  const requestStart = performance.now();
+
   try {
+    /*
+     * 1. Authenticate request
+     */
+    const authStart = performance.now();
+
     const session = await auth();
+
+    
 
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -26,7 +39,19 @@ export async function POST() {
       );
     }
 
-    const cart = await getCart();
+    /*
+     * 2. Fetch only the cart/product data required
+     *    for payment and order creation.
+     *
+     * getPaymentCart() intentionally does NOT fetch
+     * product customFields because they are not needed
+     * to calculate the payment amount.
+     */
+    const cartStart = performance.now();
+
+    const cart = await getPaymentCart(session.user.id);
+
+    
 
     if (!cart || cart.items.length === 0) {
       return NextResponse.json(
@@ -34,6 +59,13 @@ export async function POST() {
         { status: 400 }
       );
     }
+
+    /*
+     * 3. Calculate subtotal from database product prices.
+     *
+     * Client-side prices are never trusted.
+     */
+    const calculationStart = performance.now();
 
     const subtotal = cart.items.reduce(
       (total, item) =>
@@ -50,11 +82,9 @@ export async function POST() {
     }
 
     /*
-     * Shipping is calculated again on the server.
+     * Shipping is recalculated on the server.
      *
-     * The client-side shipping amount is never trusted for payment.
-     * This prevents the final Razorpay amount from being manipulated
-     * from the browser.
+     * Client-provided shipping cost is never trusted.
      */
     if (!cart.pinCode) {
       return NextResponse.json(
@@ -78,7 +108,11 @@ export async function POST() {
     }
 
     const totalAmount = subtotal + shippingCost;
-    const amountInPaise = Math.round(totalAmount * 100);
+    const amountInPaise = Math.round(
+      totalAmount * 100
+    );
+
+    
 
     if (
       !Number.isFinite(amountInPaise) ||
@@ -90,19 +124,10 @@ export async function POST() {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: {
-        id: session.user.id,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found." },
-        { status: 404 }
-      );
-    }
-
+    /*
+     * Customer email comes from the saved cart first,
+     * then authenticated session as fallback.
+     */
     const customerEmail =
       cart.email ?? session.user.email;
 
@@ -125,17 +150,19 @@ export async function POST() {
       .join(", ");
 
     /*
-     * Create the internal order first.
+     * 4. Create internal order first.
      *
-     * This binds:
+     * The order is bound to:
+     *
      * authenticated user
-     * <-> internal order
-     * <-> server-calculated subtotal
-     * <-> server-calculated shipping
-     * <-> expected payment amount
+     * server-calculated subtotal
+     * server-calculated shipping
+     * server-calculated total
      *
-     * before Razorpay checkout begins.
+     * before Razorpay checkout starts.
      */
+    const orderCreateStart = performance.now();
+
     const pendingOrder = await prisma.order.create({
       data: {
         orderNumber: generateOrderNumber(),
@@ -162,7 +189,7 @@ export async function POST() {
 
         user: {
           connect: {
-            id: user.id,
+            id: session.user.id,
           },
         },
 
@@ -180,12 +207,30 @@ export async function POST() {
       },
     });
 
+    
+
+    /*
+     * 5. Create Razorpay order.
+     *
+     * The amount is calculated entirely on the server.
+     */
+    const razorpayStart = performance.now();
+
     try {
-      const razorpayOrder = await razorpay.orders.create({
-        amount: amountInPaise,
-        currency: "INR",
-        receipt: pendingOrder.id,
-      });
+      const razorpayOrder =
+        await razorpay.orders.create({
+          amount: amountInPaise,
+          currency: "INR",
+          receipt: pendingOrder.id,
+        });
+
+      
+
+      /*
+       * 6. Store Razorpay order ID against
+       *    our internal order.
+       */
+      const orderUpdateStart = performance.now();
 
       await prisma.order.update({
         where: {
@@ -196,6 +241,10 @@ export async function POST() {
         },
       });
 
+      
+
+      
+
       return NextResponse.json({
         id: razorpayOrder.id,
         amount: razorpayOrder.amount,
@@ -204,18 +253,23 @@ export async function POST() {
       });
     } catch (razorpayError) {
       /*
-       * Razorpay order creation failed.
-       * Keep the internal order as PENDING for audit/debugging,
-       * but do not expose internal error details to the client.
+       * Razorpay creation failed.
+       *
+       * Keep the internal order as PENDING for
+       * audit/debugging, but don't expose internal
+       * error details to the client.
        */
       console.error(
         "Razorpay order creation failed:",
         razorpayError
       );
 
+      
+
       return NextResponse.json(
         {
-          error: "Unable to create payment order.",
+          error:
+            "Unable to create payment order.",
         },
         { status: 502 }
       );
@@ -226,9 +280,12 @@ export async function POST() {
       error
     );
 
+    
+
     return NextResponse.json(
       {
-        error: "Unable to create payment order.",
+        error:
+          "Unable to create payment order.",
       },
       { status: 500 }
     );
