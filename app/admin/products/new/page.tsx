@@ -3,15 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, X, GripVertical } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
 
 export default function AddProductPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
- 
-
 
   const [formData, setFormData] = useState({
     name: "",
@@ -22,12 +20,18 @@ export default function AddProductPage() {
     thumbnailUrl: "",
     galleryUrls: [] as string[],
     productType: "QUICK_CUSTOMIZE",
+
+    // Product customization options
     requiresPhoto: false,
     allowMultiplePhotos: false,
+    photoMinCount: 0,
+    photoMaxCount: 1,
     requiresCustomName: false,
     requiresCustomMessage: false,
     requiresAdditionalNotes: false,
     requiresDeliveryDate: false,
+
+    // Product status / visibility
     status: "PUBLISHED",
     isFeatured: false,
     showOnHomepage: false,
@@ -64,7 +68,6 @@ export default function AddProductPage() {
       ...prev,
       thumbnailUrl: url,
     }));
-    
   };
 
   const handleGalleryUpload = (url: string) => {
@@ -72,7 +75,13 @@ export default function AddProductPage() {
       ...prev,
       galleryUrls: [...prev.galleryUrls, url],
     }));
-    
+  };
+
+  const handleGalleryMultipleUpload = (urls: string[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      galleryUrls: [...prev.galleryUrls, ...urls],
+    }));
   };
 
   const removeGalleryImage = (index: number) => {
@@ -80,6 +89,126 @@ export default function AddProductPage() {
       ...prev,
       galleryUrls: prev.galleryUrls.filter((_, i) => i !== index),
     }));
+  };
+
+  const moveGalleryImage = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+
+    setFormData((prev) => {
+      const next = [...prev.galleryUrls];
+      const [moved] = next.splice(fromIndex, 1);
+
+      if (!moved) return prev;
+
+      next.splice(toIndex, 0, moved);
+
+      return {
+        ...prev,
+        galleryUrls: next,
+      };
+    });
+  };
+
+  const handleGalleryDragStart = (
+    e: React.DragEvent<HTMLDivElement>,
+    index: number
+  ) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+  };
+
+  const handleGalleryDrop = (
+    e: React.DragEvent<HTMLDivElement>,
+    targetIndex: number
+  ) => {
+    e.preventDefault();
+
+    const sourceIndex = Number(
+      e.dataTransfer.getData("text/plain")
+    );
+
+    if (
+      !Number.isInteger(sourceIndex) ||
+      sourceIndex < 0 ||
+      sourceIndex >= formData.galleryUrls.length
+    ) {
+      return;
+    }
+
+    moveGalleryImage(sourceIndex, targetIndex);
+  };
+
+  const handleRequiresPhotoChange = (checked: boolean) => {
+    setFormData((prev) => {
+      if (!checked) {
+        return {
+          ...prev,
+          requiresPhoto: false,
+          photoMinCount: 0,
+        };
+      }
+
+      return {
+        ...prev,
+        requiresPhoto: true,
+        photoMinCount: Math.max(1, prev.photoMinCount),
+      };
+    });
+  };
+
+  const handleAllowMultiplePhotosChange = (checked: boolean) => {
+    setFormData((prev) => {
+      if (!checked) {
+        return {
+          ...prev,
+          allowMultiplePhotos: false,
+          photoMaxCount: 1,
+          photoMinCount: prev.requiresPhoto ? 1 : 0,
+        };
+      }
+
+      return {
+        ...prev,
+        allowMultiplePhotos: true,
+        photoMaxCount: Math.max(2, prev.photoMaxCount),
+        photoMinCount: prev.requiresPhoto
+          ? Math.max(1, prev.photoMinCount)
+          : prev.photoMinCount,
+      };
+    });
+  };
+
+  const handlePhotoMinCountChange = (value: number) => {
+    const safeValue = Math.max(0, Math.floor(value));
+
+    setFormData((prev) => {
+      const minCount = prev.requiresPhoto
+        ? Math.max(1, safeValue)
+        : safeValue;
+
+      return {
+        ...prev,
+        photoMinCount: Math.min(minCount, prev.photoMaxCount),
+      };
+    });
+  };
+
+  const handlePhotoMaxCountChange = (value: number) => {
+    const safeValue = Math.max(1, Math.floor(value));
+
+    setFormData((prev) => {
+      const maxCount = prev.allowMultiplePhotos
+        ? safeValue
+        : 1;
+
+      return {
+        ...prev,
+        photoMaxCount: Math.max(
+          maxCount,
+          prev.requiresPhoto ? Math.max(1, prev.photoMinCount) : 0
+        ),
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,15 +219,39 @@ export default function AddProductPage() {
       return;
     }
 
+    if (!formData.categoryId) {
+      alert("Please select a category.");
+      return;
+    }
+
+    // Normalize photo configuration before submitting.
+    let photoMinCount = formData.requiresPhoto
+      ? Math.max(1, formData.photoMinCount)
+      : 0;
+
+    let photoMaxCount = formData.allowMultiplePhotos
+      ? Math.max(1, formData.photoMaxCount)
+      : 1;
+
+    if (photoMinCount > photoMaxCount) {
+      photoMaxCount = photoMinCount;
+    }
+
     setSubmitting(true);
 
     try {
+      const payload = {
+        ...formData,
+        photoMinCount,
+        photoMaxCount,
+      };
+
       const res = await fetch("/api/admin/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -204,7 +357,7 @@ export default function AddProductPage() {
 
           <div className="space-y-2">
             <label className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">
-              Price (₹)
+              Price (â‚¹)
             </label>
 
             <input
@@ -304,34 +457,59 @@ export default function AddProductPage() {
               <ImageUploader
                 endpoint="customerPhotoUploader"
                 onUploadComplete={handleGalleryUpload}
+                onMultipleUploadComplete={handleGalleryMultipleUpload}
               />
 
               <p className="text-[11px] text-[#6E625C]">
-                Upload up to 4 images.
+                Select multiple images at once. Drag the thumbnails to change
+                their order.
               </p>
 
               {formData.galleryUrls.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {formData.galleryUrls.map((url, idx) => (
-                    <div
-                      key={`${url}-${idx}`}
-                      className="relative group"
-                    >
-                      <img
-                        src={url}
-                        alt={`Gallery ${idx + 1}`}
-                        className="w-12 h-12 object-cover rounded-lg border border-[#EFE8E2]"
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => removeGalleryImage(idx)}
-                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 shadow hover:bg-red-600"
+                <div className="mt-3">
+                  <div className="flex flex-wrap gap-3">
+                    {formData.galleryUrls.map((url, idx) => (
+                      <div
+                        key={`${url}-${idx}`}
+                        draggable
+                        onDragStart={(e) =>
+                          handleGalleryDragStart(e, idx)
+                        }
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) =>
+                          handleGalleryDrop(e, idx)
+                        }
+                        className="relative group w-20 h-20 rounded-xl border border-[#EFE8E2] bg-white overflow-visible cursor-grab active:cursor-grabbing shadow-sm"
+                        title="Drag to reorder"
                       >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
+                        <img
+                          src={url}
+                          alt={`Gallery ${idx + 1}`}
+                          className="w-full h-full object-cover rounded-xl"
+                        />
+
+                        <div className="absolute left-1 top-1 bg-black/60 text-white rounded-md px-1.5 py-0.5 text-[10px] font-semibold">
+                          {idx + 1}
+                        </div>
+
+                        <div className="absolute bottom-1 left-1 bg-white/90 text-[#6E625C] rounded-md p-1 shadow">
+                          <GripVertical className="w-3 h-3" />
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeGalleryImage(idx)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 z-10"
+                          aria-label={`Remove gallery image ${idx + 1}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -349,7 +527,9 @@ export default function AddProductPage() {
               <input
                 type="radio"
                 name="productType"
-                checked={formData.productType === "QUICK_CUSTOMIZE"}
+                checked={
+                  formData.productType === "QUICK_CUSTOMIZE"
+                }
                 onChange={() =>
                   setFormData({
                     ...formData,
@@ -404,20 +584,25 @@ export default function AddProductPage() {
 
         {/* CUSTOMIZATION OPTIONS */}
         <div className="bg-white p-6 rounded-2xl border border-[#EFE8E2] shadow-sm space-y-6">
-          <h2 className="font-serif text-xl font-bold text-[#1F1816] border-b border-[#EFE8E2] pb-3">
-            Customization Options
-          </h2>
+          <div>
+            <h2 className="font-serif text-xl font-bold text-[#1F1816] border-b border-[#EFE8E2] pb-3">
+              Customization Options
+            </h2>
+
+            <p className="text-xs text-[#6E625C] mt-3">
+              Configure what information the customer must provide before
+              adding this product to the cart.
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* PHOTO */}
             <label className="flex items-center gap-3 p-3 rounded-xl border border-[#EFE8E2] hover:bg-[#F9F6F2]/50 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.requiresPhoto}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    requiresPhoto: e.target.checked,
-                  })
+                  handleRequiresPhotoChange(e.target.checked)
                 }
                 className="rounded text-[#C89A84] focus:ring-[#C89A84]"
               />
@@ -427,15 +612,13 @@ export default function AddProductPage() {
               </span>
             </label>
 
+            {/* MULTIPLE PHOTOS */}
             <label className="flex items-center gap-3 p-3 rounded-xl border border-[#EFE8E2] hover:bg-[#F9F6F2]/50 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.allowMultiplePhotos}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    allowMultiplePhotos: e.target.checked,
-                  })
+                  handleAllowMultiplePhotosChange(e.target.checked)
                 }
                 className="rounded text-[#C89A84] focus:ring-[#C89A84]"
               />
@@ -445,6 +628,70 @@ export default function AddProductPage() {
               </span>
             </label>
 
+            {/* PHOTO COUNT CONFIG */}
+            {(formData.requiresPhoto ||
+              formData.allowMultiplePhotos) && (
+              <div className="md:col-span-2 p-4 rounded-xl border border-[#EFE8E2] bg-[#F9F6F2]/50 space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-[#1F1816]">
+                    Photo Count
+                  </p>
+
+                  <p className="text-xs text-[#6E625C] mt-1">
+                    Set how many photos the customer must or may upload.
+                    Selecting multiple photos will still use one file picker
+                    on the customer side.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">
+                      Minimum Photos
+                    </label>
+
+                    <input
+                      type="number"
+                      min={formData.requiresPhoto ? 1 : 0}
+                      max={formData.photoMaxCount}
+                      value={formData.photoMinCount}
+                      onChange={(e) =>
+                        handlePhotoMinCountChange(
+                          Number(e.target.value)
+                        )
+                      }
+                      className="w-full px-4 py-2.5 bg-white border border-[#EFE8E2] rounded-xl text-sm focus:outline-none focus:border-[#C89A84]"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[#6E625C]">
+                      Maximum Photos
+                    </label>
+
+                    <input
+                      type="number"
+                      min={formData.allowMultiplePhotos ? 2 : 1}
+                      value={formData.photoMaxCount}
+                      onChange={(e) =>
+                        handlePhotoMaxCountChange(
+                          Number(e.target.value)
+                        )
+                      }
+                      disabled={!formData.allowMultiplePhotos}
+                      className="w-full px-4 py-2.5 bg-white border border-[#EFE8E2] rounded-xl text-sm focus:outline-none focus:border-[#C89A84] disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-[#6E625C]">
+                  Example: for exactly 8 photos, set Minimum = 8 and
+                  Maximum = 8.
+                </div>
+              </div>
+            )}
+
+            {/* NAME */}
             <label className="flex items-center gap-3 p-3 rounded-xl border border-[#EFE8E2] hover:bg-[#F9F6F2]/50 cursor-pointer">
               <input
                 type="checkbox"
@@ -463,6 +710,7 @@ export default function AddProductPage() {
               </span>
             </label>
 
+            {/* MESSAGE */}
             <label className="flex items-center gap-3 p-3 rounded-xl border border-[#EFE8E2] hover:bg-[#F9F6F2]/50 cursor-pointer">
               <input
                 type="checkbox"
@@ -481,6 +729,7 @@ export default function AddProductPage() {
               </span>
             </label>
 
+            {/* NOTES */}
             <label className="flex items-center gap-3 p-3 rounded-xl border border-[#EFE8E2] hover:bg-[#F9F6F2]/50 cursor-pointer">
               <input
                 type="checkbox"
@@ -499,6 +748,7 @@ export default function AddProductPage() {
               </span>
             </label>
 
+            {/* DELIVERY DATE */}
             <label className="flex items-center gap-3 p-3 rounded-xl border border-[#EFE8E2] hover:bg-[#F9F6F2]/50 cursor-pointer">
               <input
                 type="checkbox"
@@ -583,7 +833,7 @@ export default function AddProductPage() {
               </span>
             </label>
 
-            <label className="flex items-center gap-3 p-3 rounded-xl border border-[#EFE8E2] hover:bg-[#F9F6F2]/50 cursor-pointer">
+            <label className="flex items-center gap-3 p-3 rounded-xl border border-[#EFE8E8] hover:bg-[#F9F6F2]/50 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.isSeasonal}

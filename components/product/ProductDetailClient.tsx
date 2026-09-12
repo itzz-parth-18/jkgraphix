@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { UploadButton } from "@uploadthing/react";
-import CustomizationEngine, {
-  CustomField,
-} from "@/components/CustomizationEngine";
+import CustomizationEngine from "@/components/CustomizationEngine";
 import CartDrawer, { CartItem } from "@/components/CartDrawer";
 import {
   ShoppingBag,
@@ -15,6 +13,8 @@ import {
   CheckCircle2,
   Trash2,
   MessageCircle,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import { OurFileRouter } from "@/app/api/uploadthing/core";
 
@@ -29,10 +29,66 @@ export default function ProductDetailClient({
 }: Props) {
   const { data: session, status: sessionStatus } = useSession();
 
-  const [selectedImage, setSelectedImage] = useState(
-    product.imageUrl ||
-      "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=1000&auto=format&fit=crop&q=60"
+  const fallbackProductImage =
+    "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=1000&auto=format&fit=crop&q=60";
+
+  /*
+   * Product gallery images are separate from customer-uploaded
+   * customization photos.
+   *
+   * imageUrl = primary product image
+   * galleryUrls = additional product gallery images
+   */
+  const productImages = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [
+            product.imageUrl,
+            ...(Array.isArray(product.galleryUrls)
+              ? product.galleryUrls
+              : []),
+          ].filter(
+            (url): url is string =>
+              typeof url === "string" && url.trim().length > 0
+          )
+        )
+      ),
+    [product.imageUrl, product.galleryUrls]
   );
+
+  const displayProductImages =
+    productImages.length > 0 ? productImages : [fallbackProductImage];
+
+  const [selectedImage, setSelectedImage] = useState(
+    displayProductImages[0]
+  );
+
+  useEffect(() => {
+    if (displayProductImages.length <= 1) return;
+
+    const interval = window.setInterval(() => {
+      setSelectedImage((currentImage) => {
+        const currentIndex =
+          displayProductImages.indexOf(currentImage);
+
+        const nextIndex =
+          currentIndex === -1
+            ? 0
+            : (currentIndex + 1) % displayProductImages.length;
+
+        return displayProductImages[nextIndex];
+      });
+    }, 3000);
+
+    return () => window.clearInterval(interval);
+  }, [displayProductImages]);
+
+  useEffect(() => {
+    if (!displayProductImages.includes(selectedImage)) {
+      setSelectedImage(displayProductImages[0]);
+    }
+  }, [displayProductImages, selectedImage]);
 
   const [customizationData, setCustomizationData] = useState<
     Record<string, any>
@@ -47,22 +103,161 @@ export default function ProductDetailClient({
 
   const isCR = product.productType === "DESIGN_CONSULTATION";
 
+  /*
+   * ---------------------------------------------------------
+   * PRODUCT PHOTO CONFIG
+   * ---------------------------------------------------------
+   */
+
+  const rawPhotoMin = Number(product.photoMinCount ?? 0);
+  const rawPhotoMax = Number(
+    product.photoMaxCount ?? product.maxPhotoUploads ?? 1
+  );
+
+  const photoMinCount = Math.max(
+    0,
+    Number.isFinite(rawPhotoMin) ? Math.floor(rawPhotoMin) : 0
+  );
+
+  const photoMaxCount = Math.max(
+    photoMinCount,
+    Number.isFinite(rawPhotoMax) ? Math.floor(rawPhotoMax) : 1
+  );
+
+  const requiresPhoto =
+    Boolean(product.requiresPhoto) || photoMinCount > 0;
+
+  const allowMultiplePhotos =
+    Boolean(product.allowMultiplePhotos) || photoMaxCount > 1;
+
+  const getPhotoUrls = (data: Record<string, any>): string[] => {
+    if (Array.isArray(data.photos)) {
+      return data.photos.filter(
+        (url: unknown): url is string =>
+          typeof url === "string" && url.trim().length > 0
+      );
+    }
+
+    const legacyPhoto =
+      data.customPhotoUrl || data.photo_upload;
+
+    if (
+      typeof legacyPhoto === "string" &&
+      legacyPhoto.trim().length > 0
+    ) {
+      return [legacyPhoto];
+    }
+
+    return [];
+  };
+
+  const photoUrls = getPhotoUrls(customizationData);
+
+  /*
+   * ---------------------------------------------------------
+   * STANDARD PRODUCT CUSTOMIZATION VALIDATION
+   * ---------------------------------------------------------
+   */
+
   const validateCustomFields = () => {
     const errors: string[] = [];
 
+    /*
+     * Advanced custom fields created through CustomFieldsEditor
+     */
     product.customFields?.forEach((field: any) => {
-      if (field.isRequired && !customizationData[field.id]) {
+      const value = customizationData[field.id];
+
+      if (
+        field.isRequired &&
+        (value === undefined ||
+          value === null ||
+          String(value).trim() === "")
+      ) {
         errors.push(field.label);
       }
     });
 
+    /*
+     * Product-level photo requirement
+     */
+    if (requiresPhoto && photoUrls.length < photoMinCount) {
+      errors.push(
+        photoMinCount === 1
+          ? "Photo upload is required"
+          : `${photoMinCount} photos are required`
+      );
+    }
+
+    if (photoUrls.length > photoMaxCount) {
+      errors.push(
+        photoMaxCount === 1
+          ? "Only 1 photo can be uploaded"
+          : `Maximum ${photoMaxCount} photos can be uploaded`
+      );
+    }
+
+    if (!allowMultiplePhotos && photoUrls.length > 1) {
+      errors.push("Only 1 photo can be uploaded for this product");
+    }
+
+    /*
+     * Standard custom name
+     */
+    if (
+      product.requiresCustomName &&
+      !String(customizationData.customName || "").trim()
+    ) {
+      errors.push("Custom Name");
+    }
+
+    /*
+     * Standard custom message
+     */
+    if (
+      product.requiresCustomMessage &&
+      !String(customizationData.customMessage || "").trim()
+    ) {
+      errors.push("Custom Message");
+    }
+
+    /*
+     * Standard additional notes
+     */
+    if (
+      product.requiresAdditionalNotes &&
+      !String(customizationData.additionalNotes || "").trim()
+    ) {
+      errors.push("Additional Notes");
+    }
+
+    /*
+     * Standard delivery date
+     */
+    if (
+      product.requiresDeliveryDate &&
+      !String(customizationData.deliveryDate || "").trim()
+    ) {
+      errors.push("Delivery Date");
+    }
+
+    /*
+     * Consultation WhatsApp
+     */
     if (isCR && !whatsappNumber.trim()) {
       errors.push("WhatsApp Number (Required for Consultation)");
     }
 
     setValidationErrors(errors);
+
     return errors.length === 0;
   };
+
+  /*
+   * ---------------------------------------------------------
+   * CART
+   * ---------------------------------------------------------
+   */
 
   const fetchCart = async () => {
     try {
@@ -70,14 +265,22 @@ export default function ProductDetailClient({
 
       if (res.ok) {
         const data = await res.json();
-        const rawItems = Array.isArray(data) ? data : data.items || [];
+        const rawItems = Array.isArray(data)
+          ? data
+          : data.items || [];
 
         const formattedItems = rawItems.map((item: any) => ({
           id: item.id,
           productId: item.productId || item.product?.id,
-          name: item.name || item.product?.name || "Custom Item",
+          name:
+            item.name ||
+            item.product?.name ||
+            "Custom Item",
           price: Number(
-            item.price ?? item.basePrice ?? item.product?.basePrice ?? 0
+            item.price ??
+              item.basePrice ??
+              item.product?.basePrice ??
+              0
           ),
           quantity: Number(item.quantity ?? 1),
           image:
@@ -95,13 +298,18 @@ export default function ProductDetailClient({
     }
   };
 
-  const handleUpdateQuantity = async (id: string, newQty: number) => {
+  const handleUpdateQuantity = async (
+    id: string,
+    newQty: number
+  ) => {
     if (newQty < 1) return;
 
     // Optimistic UI update
     setCartItems((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, quantity: newQty } : item
+        item.id === id
+          ? { ...item, quantity: newQty }
+          : item
       )
     );
 
@@ -121,8 +329,6 @@ export default function ProductDetailClient({
       }
     } catch (error) {
       console.error("Failed to update quantity", error);
-
-      // Re-fetch server state if update failed
       await fetchCart();
     }
   };
@@ -133,12 +339,15 @@ export default function ProductDetailClient({
     }
 
     try {
+      /*
+       * Preserve the old photo aliases for backward compatibility.
+       * New multi-photo data lives in `photos`.
+       */
       const finalCustomizations = {
         ...customizationData,
-        customPhotoUrl:
-          customizationData.photo_upload ||
-          customizationData.customPhotoUrl ||
-          "",
+        photos: photoUrls,
+        customPhotoUrl: photoUrls[0] || "",
+        photo_upload: photoUrls[0] || "",
       };
 
       const res = await fetch("/api/cart", {
@@ -153,7 +362,9 @@ export default function ProductDetailClient({
         }),
       });
 
-      // Agar user logged-in nahi hai (401 Unauthorized)
+      /*
+       * Agar user logged-in nahi hai
+       */
       if (res.status === 401) {
         localStorage.setItem(
           "pending_cart_item",
@@ -172,7 +383,25 @@ export default function ProductDetailClient({
       }
 
       if (!res.ok) {
-        alert("Failed to add item to cart.");
+        let errorMessage = "Failed to add item to cart.";
+
+        try {
+          const errorData = await res.json();
+
+          if (
+            Array.isArray(errorData.validationErrors) &&
+            errorData.validationErrors.length > 0
+          ) {
+            errorMessage =
+              errorData.validationErrors.join("\n");
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {
+          // Keep fallback message
+        }
+
+        alert(errorMessage);
         return;
       }
 
@@ -192,7 +421,9 @@ export default function ProductDetailClient({
   };
 
   const handleRemoveItem = async (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+    setCartItems((prev) =>
+      prev.filter((item) => item.id !== id)
+    );
 
     try {
       await fetch(`/api/cart/${id}`, {
@@ -203,8 +434,139 @@ export default function ProductDetailClient({
     }
   };
 
+  /*
+   * ---------------------------------------------------------
+   * STANDARD CUSTOMIZATION HANDLER
+   * ---------------------------------------------------------
+   */
+
+  const updateCustomization = (
+    key: string,
+    value: any
+  ) => {
+    setCustomizationData((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+
+    if (validationErrors.length > 0) {
+      setValidationErrors([]);
+    }
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * PHOTO UPLOAD
+   * ---------------------------------------------------------
+   */
+
+  const handlePhotoUploadComplete = (res: any[]) => {
+    if (!res || res.length === 0) {
+      return;
+    }
+
+    const uploadedUrls = res
+      .map((file: any) => file?.ufsUrl || file?.url)
+      .filter(
+        (url: unknown): url is string =>
+          typeof url === "string" &&
+          url.trim().length > 0
+      );
+
+    if (uploadedUrls.length === 0) {
+      return;
+    }
+
+    setCustomizationData((prev) => {
+      const existingPhotos = getPhotoUrls(prev);
+
+      const mergedPhotos = Array.from(
+        new Set([...existingPhotos, ...uploadedUrls])
+      ).slice(0, photoMaxCount);
+
+      return {
+        ...prev,
+        photos: mergedPhotos,
+
+        /*
+         * Backward-compatible aliases
+         */
+        photo_upload: mergedPhotos[0] || "",
+        customPhotoUrl: mergedPhotos[0] || "",
+      };
+    });
+
+    setValidationErrors([]);
+  };
+
+  const removePhoto = (urlToRemove: string) => {
+    setCustomizationData((prev) => {
+      const remainingPhotos = getPhotoUrls(prev).filter(
+        (url) => url !== urlToRemove
+      );
+
+      return {
+        ...prev,
+        photos: remainingPhotos,
+        photo_upload: remainingPhotos[0] || "",
+        customPhotoUrl: remainingPhotos[0] || "",
+      };
+    });
+
+    setValidationErrors([]);
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * PHOTO LABEL
+   * ---------------------------------------------------------
+   */
+
+  const getPhotoLabel = () => {
+    if (photoMinCount === photoMaxCount) {
+      if (photoMinCount === 0) {
+        return "Upload High-Resolution Photo (Optional)";
+      }
+
+      if (photoMinCount === 1) {
+        return "Upload High-Resolution Photo";
+      }
+
+      return `Upload ${photoMinCount} Photos`;
+    }
+
+    if (photoMinCount === 0) {
+      return `Upload Photos (Up to ${photoMaxCount})`;
+    }
+
+    return `Upload ${photoMinCount}–${photoMaxCount} Photos`;
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * UI
+   * ---------------------------------------------------------
+   */
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-12">
+    <>
+      <style jsx>{`
+        .product-gallery-progress {
+          width: 0%;
+          animation: productGalleryProgress 3s linear forwards;
+        }
+
+        @keyframes productGalleryProgress {
+          from {
+            width: 0%;
+          }
+          to {
+            width: 100%;
+          }
+        }
+      `}</style>
+
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-12">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
         {/* Gallery */}
         <div className="space-y-3 lg:col-span-7 lg:space-y-4">
@@ -221,15 +583,53 @@ export default function ProductDetailClient({
             </span>
           </div>
 
+          {displayProductImages.length > 1 && (
+            <div
+              className="flex w-full gap-1.5 px-1"
+              role="tablist"
+              aria-label="Product image slideshow"
+            >
+              {displayProductImages.map((img, idx) => {
+                const selectedIndex = displayProductImages.indexOf(
+                  selectedImage
+                );
+                const isActive = selectedImage === img;
+                const isCompleted =
+                  selectedIndex !== -1 && idx < selectedIndex;
+
+                return (
+                  <button
+                    key={`progress-${img}-${idx}`}
+                    type="button"
+                    onClick={() => setSelectedImage(img)}
+                    aria-label={`View product image ${idx + 1}`}
+                    className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-[#E9E0DA]"
+                    role="tab"
+                    aria-selected={isActive}
+                  >
+                    {isCompleted && (
+                      <span className="absolute inset-0 rounded-full bg-[#C89A84]" />
+                    )}
+
+                    {isActive && (
+                      <span
+                        key={`progress-fill-${img}-${idx}`}
+                        className="product-gallery-progress absolute inset-y-0 left-0 rounded-full bg-[#C89A84]"
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-4">
-            {[
-              product.imageUrl ||
-                "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=1000&auto=format&fit=crop&q=60",
-            ].map((img, idx) => (
+            {displayProductImages.map((img, idx) => (
               <button
-                key={idx}
+                key={`${img}-${idx}`}
                 type="button"
                 onClick={() => setSelectedImage(img)}
+                aria-label={`View product image ${idx + 1}`}
                 className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition sm:h-20 sm:w-20 ${
                   selectedImage === img
                     ? "scale-95 border-[#C89A84]"
@@ -238,7 +638,7 @@ export default function ProductDetailClient({
               >
                 <img
                   src={img}
-                  alt=""
+                  alt={`${product.name} image ${idx + 1}`}
                   className="h-full w-full object-cover"
                 />
               </button>
@@ -270,128 +670,336 @@ export default function ProductDetailClient({
             </div>
           </div>
 
-          <CustomizationEngine
-            fields={product.customFields || []}
-            onChange={(data) => {
-              setCustomizationData((prev) => ({
-                ...prev,
-                ...data,
-              }));
+          {/* Existing advanced custom fields */}
+          {product.customFields?.length > 0 && (
+            <CustomizationEngine
+              fields={product.customFields || []}
+              onChange={(data) => {
+                setCustomizationData((prev) => ({
+                  ...prev,
+                  ...data,
+                }));
 
-              if (validationErrors.length > 0) {
-                setValidationErrors([]);
-              }
-            }}
-          />
+                if (validationErrors.length > 0) {
+                  setValidationErrors([]);
+                }
+              }}
+            />
+          )}
 
-          {/* Upload */}
-          <div className="space-y-2 border-t border-[#EFE8E2] pt-4">
-            <label className="block text-sm font-medium text-[#1F1816]">
-              Upload High-Resolution Photo (Cloud)
-            </label>
+          {/* -------------------------------------------------
+              STANDARD PRODUCT CUSTOMIZATIONS
+              ------------------------------------------------- */}
 
-            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#EFE8E2] bg-[#F9F6F2] p-4 transition hover:border-[#C89A84] sm:p-5">
-              {customizationData.photo_upload ? (
-                <div className="flex w-full items-center justify-between gap-2 rounded-xl border border-[#EFE8E2] bg-white p-2.5 sm:gap-3 sm:p-3">
-                  <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-                    <img
-                      src={customizationData.photo_upload}
-                      alt="Uploaded customer photo"
-                      className="h-12 w-12 shrink-0 rounded-lg border border-[#EFE8E2] object-cover sm:h-14 sm:w-14"
-                    />
+          {(product.requiresCustomName ||
+            product.requiresCustomMessage ||
+            product.requiresAdditionalNotes ||
+            product.requiresDeliveryDate) && (
+            <div className="space-y-5 rounded-2xl border border-[#EFE8E2] bg-[#F9F6F2] p-4 sm:p-5">
+              <div>
+                <h3 className="font-serif text-lg font-medium text-[#1F1816]">
+                  Personalize Your Order
+                </h3>
 
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 sm:text-xs">
-                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                        Photo Attached Successfully
-                      </p>
+                <p className="mt-1 text-xs leading-relaxed text-[#6E625C]">
+                  Please enter the details exactly as you want
+                  them printed.
+                </p>
+              </div>
 
-                      <p className="mt-0.5 max-w-[150px] truncate text-[10px] text-[#6E625C] sm:max-w-[180px]">
-                        {customizationData.photo_upload}
-                      </p>
-                    </div>
-                  </div>
+              {/* Custom Name */}
+              {product.requiresCustomName && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[#1F1816]">
+                    Custom Name{" "}
+                    <span className="text-rose-500">*</span>
+                  </label>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCustomizationData((prev) => ({
-                        ...prev,
-                        photo_upload: undefined,
-                        customPhotoUrl: undefined,
-                      }))
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={customizationData.customName || ""}
+                    onChange={(e) =>
+                      updateCustomization(
+                        "customName",
+                        e.target.value
+                      )
                     }
-                    className="flex shrink-0 items-center gap-1 rounded-lg p-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Remove</span>
-                  </button>
+                    placeholder="Enter the name to be printed"
+                    className="w-full rounded-xl border border-[#EFE8E2] bg-white px-4 py-3 text-sm text-[#1F1816] placeholder:text-[#A99D96] transition focus:outline-none focus:ring-2 focus:ring-[#C89A84]/50"
+                  />
                 </div>
-              ) : (
-                <div className="flex w-full flex-col items-center justify-center">
-                  {sessionStatus === "loading" ? (
-                    <p className="text-xs text-[#6E625C]">
-                      Checking login status...
-                    </p>
-                  ) : !session ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        window.location.href =
-                          "/login?callbackUrl=" +
-                          encodeURIComponent(window.location.pathname);
-                      }}
-                      className="cursor-pointer rounded-xl bg-[#1F1816] px-5 py-2.5 text-xs font-medium text-[#F9F6F2] shadow-sm transition hover:bg-[#322724]"
-                    >
-                      Login to Upload Photo
-                    </button>
-                  ) : (
-                    <UploadButton<OurFileRouter, any>
-                      endpoint="customerPhotoUploader"
-                      appearance={{
-                        button:
-                          "bg-[#1F1816] text-[#F9F6F2] font-medium text-xs px-5 py-2.5 rounded-xl hover:bg-[#322724] transition shadow-sm cursor-pointer ut-readying:bg-gray-400",
-                        container:
-                          "flex w-full flex-col items-center justify-center gap-2",
-                        allowedContent:
-                          "mt-1 text-center text-[11px] text-[#6E625C]",
-                      }}
-                      onClientUploadComplete={(res: any) => {
-                        if (res && res[0]) {
-                          const url = res[0].ufsUrl || res[0].url;
+              )}
 
-                          if (url) {
-                            setCustomizationData((prev) => ({
-                              ...prev,
-                              photo_upload: url,
-                              customPhotoUrl: url,
-                            }));
-                          }
-                        }
-                      }}
-                      onUploadError={(error: Error) => {
-                        alert(`Upload failed: ${error.message}`);
-                      }}
-                    />
-                  )}
+              {/* Custom Message */}
+              {product.requiresCustomMessage && (
+                <div className="space-y-2">
+                  <label className="flex items-center justify-between text-sm font-medium text-[#1F1816]">
+                    <span>
+                      Custom Message{" "}
+                      <span className="text-rose-500">*</span>
+                    </span>
 
-                  <span className="mt-2 text-center text-[10px] leading-relaxed text-[#6E625C] sm:text-[11px]">
-                    Supports PNG, JPG up to 4MB (Progress bar included)
-                  </span>
+                    <span className="text-xs font-normal text-[#6E625C]">
+                      {(customizationData.customMessage || "")
+                        .length}
+                      /500
+                    </span>
+                  </label>
+
+                  <textarea
+                    rows={4}
+                    maxLength={500}
+                    value={
+                      customizationData.customMessage || ""
+                    }
+                    onChange={(e) =>
+                      updateCustomization(
+                        "customMessage",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Write the message you want to be printed"
+                    className="w-full resize-none rounded-xl border border-[#EFE8E2] bg-white px-4 py-3 text-sm text-[#1F1816] placeholder:text-[#A99D96] transition focus:outline-none focus:ring-2 focus:ring-[#C89A84]/50"
+                  />
+                </div>
+              )}
+
+              {/* Additional Notes */}
+              {product.requiresAdditionalNotes && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[#1F1816]">
+                    Additional Notes{" "}
+                    <span className="text-rose-500">*</span>
+                  </label>
+
+                  <textarea
+                    rows={4}
+                    maxLength={1000}
+                    value={
+                      customizationData.additionalNotes || ""
+                    }
+                    onChange={(e) =>
+                      updateCustomization(
+                        "additionalNotes",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Any special instructions for your order..."
+                    className="w-full resize-none rounded-xl border border-[#EFE8E2] bg-white px-4 py-3 text-sm text-[#1F1816] placeholder:text-[#A99D96] transition focus:outline-none focus:ring-2 focus:ring-[#C89A84]/50"
+                  />
+                </div>
+              )}
+
+              {/* Delivery Date */}
+              {product.requiresDeliveryDate && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[#1F1816]">
+                    Preferred Delivery Date{" "}
+                    <span className="text-rose-500">*</span>
+                  </label>
+
+                  <input
+                    type="date"
+                    value={
+                      customizationData.deliveryDate || ""
+                    }
+                    onChange={(e) =>
+                      updateCustomization(
+                        "deliveryDate",
+                        e.target.value
+                      )
+                    }
+                    className="w-full rounded-xl border border-[#EFE8E2] bg-white px-4 py-3 text-sm text-[#1F1816] transition focus:outline-none focus:ring-2 focus:ring-[#C89A84]/50"
+                  />
                 </div>
               )}
             </div>
-          </div>
+          )}
+
+          {/* -------------------------------------------------
+              MULTI PHOTO UPLOAD
+              ------------------------------------------------- */}
+
+          {(requiresPhoto || photoMaxCount > 0) && (
+            <div className="space-y-2 border-t border-[#EFE8E2] pt-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-[#1F1816]">
+                    {getPhotoLabel()}
+                    {requiresPhoto && (
+                      <span className="ml-1 text-rose-500">
+                        *
+                      </span>
+                    )}
+                  </label>
+
+                  <p className="mt-1 text-xs leading-relaxed text-[#6E625C]">
+                    {photoMinCount === photoMaxCount &&
+                    photoMinCount > 1
+                      ? `Please upload exactly ${photoMinCount} photos.`
+                      : photoMaxCount > 1
+                        ? `Select multiple photos together. ${photoMinCount > 0 ? `At least ${photoMinCount} required. ` : ""}Maximum ${photoMaxCount}.`
+                        : requiresPhoto
+                          ? "Please upload your photo before adding the product to cart."
+                          : "You may upload a photo if needed."}
+                  </p>
+                </div>
+
+                {photoMaxCount > 0 && (
+                  <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[#6E625C]">
+                    {photoUrls.length}/{photoMaxCount}
+                  </span>
+                )}
+              </div>
+
+              <div className="rounded-2xl border-2 border-dashed border-[#EFE8E2] bg-[#F9F6F2] p-4 transition hover:border-[#C89A84] sm:p-5">
+                {/* Uploaded photos */}
+                {photoUrls.length > 0 && (
+                  <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {photoUrls.map((url, index) => (
+                      <div
+                        key={`${url}-${index}`}
+                        className="group relative overflow-hidden rounded-xl border border-[#EFE8E2] bg-white"
+                      >
+                        <img
+                          src={url}
+                          alt={`Uploaded customer photo ${index + 1}`}
+                          className="aspect-square w-full object-cover"
+                        />
+
+                        <div className="absolute left-2 top-2 rounded-full bg-black/65 px-2 py-1 text-[10px] font-semibold text-white">
+                          {index + 1}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(url)}
+                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-[#6E625C] shadow-sm transition hover:bg-rose-50 hover:text-red-600"
+                          title="Remove photo"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Upload button */}
+                {photoUrls.length < photoMaxCount && (
+                  <>
+                    {sessionStatus === "loading" ? (
+                      <div className="flex flex-col items-center justify-center py-3">
+                        <p className="text-xs text-[#6E625C]">
+                          Checking login status...
+                        </p>
+                      </div>
+                    ) : !session ? (
+                      <div className="flex flex-col items-center justify-center py-3">
+                        <ImagePlus className="mb-2 h-7 w-7 text-[#C89A84]" />
+
+                        <p className="mb-3 text-center text-xs font-medium text-[#1F1816]">
+                          Login required to upload photos
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            window.location.href =
+                              "/login?callbackUrl=" +
+                              encodeURIComponent(
+                                window.location.pathname
+                              );
+                          }}
+                          className="cursor-pointer rounded-xl bg-[#1F1816] px-5 py-2.5 text-xs font-medium text-[#F9F6F2] shadow-sm transition hover:bg-[#322724]"
+                        >
+                          Login to Upload
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center">
+                        <UploadButton<
+                          OurFileRouter,
+                          "customerPhotoUploader"
+                        >
+                          endpoint="customerPhotoUploader"
+                          appearance={{
+                            button:
+                              "bg-[#1F1816] text-[#F9F6F2] font-medium text-xs px-5 py-2.5 rounded-xl hover:bg-[#322724] transition shadow-sm cursor-pointer ut-readying:bg-gray-400",
+                            container:
+                              "flex w-full flex-col items-center justify-center gap-2",
+                            allowedContent:
+                              "mt-1 text-center text-[11px] text-[#6E625C]",
+                          }}
+                          onBeforeUploadBegin={(files) => {
+                            const remaining =
+                              photoMaxCount -
+                              photoUrls.length;
+
+                            if (remaining <= 0) {
+                              return [];
+                            }
+
+                            if (files.length > remaining) {
+                              alert(
+                                `This product allows a maximum of ${photoMaxCount} photos. Only ${remaining} more photo${remaining === 1 ? "" : "s"} can be uploaded.`
+                              );
+
+                              return files.slice(
+                                0,
+                                remaining
+                              );
+                            }
+
+                            return files;
+                          }}
+                          onClientUploadComplete={(res: any[]) => {
+                            handlePhotoUploadComplete(res);
+                          }}
+                          onUploadError={(error: Error) => {
+                            alert(
+                              `Upload failed: ${error.message}`
+                            );
+                          }}
+                        />
+
+                        <p className="mt-2 text-center text-[10px] leading-relaxed text-[#6E625C] sm:text-[11px]">
+                          Select multiple photos together •
+                          PNG/JPG up to 8MB each
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Max reached */}
+                {photoUrls.length >= photoMaxCount &&
+                  photoMaxCount > 0 && (
+                    <div className="flex items-center justify-center gap-2 border-t border-[#EFE8E2] pt-3">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+
+                      <span className="text-xs font-medium text-emerald-700">
+                        {photoMaxCount === 1
+                          ? "Photo attached successfully"
+                          : `All ${photoMaxCount} photos uploaded successfully`}
+                      </span>
+                    </div>
+                  )}
+              </div>
+            </div>
+          )}
 
           {/* WhatsApp for CR */}
           {isCR && (
             <div className="space-y-2 border-t border-[#EFE8E2] pt-4">
               <label className="block text-sm font-medium text-[#1F1816]">
-                WhatsApp Number <span className="text-red-500">*</span>
+                WhatsApp Number{" "}
+                <span className="text-red-500">*</span>
               </label>
 
               <p className="mb-2 text-xs leading-relaxed text-[#6E625C]">
-                Required for custom consultation before order processing.
+                Required for custom consultation before order
+                processing.
               </p>
 
               <input
@@ -432,7 +1040,9 @@ export default function ProductDetailClient({
                 <button
                   type="button"
                   onClick={() =>
-                    setQuantity(Math.max(1, quantity - 1))
+                    setQuantity(
+                      Math.max(1, quantity - 1)
+                    )
                   }
                   className="flex h-10 w-10 items-center justify-center font-bold text-[#6E625C] hover:text-[#1F1816]"
                 >
@@ -445,7 +1055,9 @@ export default function ProductDetailClient({
 
                 <button
                   type="button"
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() =>
+                    setQuantity(quantity + 1)
+                  }
                   className="flex h-10 w-10 items-center justify-center font-bold text-[#6E625C] hover:text-[#1F1816]"
                 >
                   +
@@ -459,7 +1071,9 @@ export default function ProductDetailClient({
               >
                 <ShoppingBag className="h-4 w-4 shrink-0" />
                 Add to Cart — ₹
-                {(Number(product.basePrice) * quantity).toFixed(2)}
+                {(Number(product.basePrice) * quantity).toFixed(
+                  2
+                )}
               </button>
 
               {isCR && (
@@ -530,13 +1144,14 @@ export default function ProductDetailClient({
         </section>
       )}
 
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        items={cartItems}
-        onRemoveItem={handleRemoveItem}
-        onUpdateQuantity={handleUpdateQuantity}
-      />
-    </div>
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          items={cartItems}
+          onRemoveItem={handleRemoveItem}
+          onUpdateQuantity={handleUpdateQuantity}
+        />
+      </div>
+    </>
   );
 }

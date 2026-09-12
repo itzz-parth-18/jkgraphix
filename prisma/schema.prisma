@@ -7,44 +7,54 @@ datasource db {
 }
 
 model Product {
-  id             String        @id @default(cuid())
-  name           String
-  slug           String        @unique
-  description    String?
-  basePrice        Float       @default(0)
-  sku            String?        @unique
-  imageUrl       String?
-  status         String        @default("PUBLISHED")
-  productType      ProductType @default(QUICK_CUSTOMIZE)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  categoryId     String?
-  isFeatured     Boolean       @default(false)
-  isSeasonal     Boolean       @default(false)
-  showOnHomepage Boolean       @default(false)
-  cartItems      CartItem[]
-  customFields   CustomField[]
-  orderItems     OrderItem[]
-  category       Category?     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  id                      String        @id @default(cuid())
+  name                    String
+  slug                    String        @unique
+  description             String?
+  basePrice               Float         @default(0)
+  sku                     String?       @unique
+  imageUrl                String?
+  galleryUrls             String[]      @default([])
+  status                  String        @default("PUBLISHED")
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  categoryId              String?
+  isFeatured              Boolean       @default(false)
+  isSeasonal              Boolean       @default(false)
+  productType             ProductType   @default(QUICK_CUSTOMIZE)
+  showOnHomepage          Boolean       @default(false)
+  maxPhotoUploads         Int           @default(1)
+  requiresPhoto           Boolean       @default(false)
+  allowMultiplePhotos     Boolean       @default(false)
+  photoMinCount           Int           @default(0)
+  photoMaxCount           Int           @default(1)
+  requiresCustomName      Boolean       @default(false)
+  requiresCustomMessage   Boolean       @default(false)
+  requiresAdditionalNotes Boolean       @default(false)
+  requiresDeliveryDate    Boolean       @default(false)
+  cartItems               CartItem[]
+  customFields            CustomField[]
+  orderItems              OrderItem[]
+  category                Category?     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 }
 
 model Category {
-  id            String         @id @default(cuid())
-  name          String         @unique
-  slug          String         @unique
-  description   String?
-  imageUrl      String?
-  status        CategoryStatus @default(ACTIVE)
-  displayOrder     Int            @default(0)
-  isVisible      Boolean     @default(true)
-  showOnHomepage Boolean     @default(true)
-  isFeatured     Boolean     @default(false)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  serviceTypeId String?
-  ServiceType   ServiceType?    @relation(fields: [serviceTypeId], references: [id])
-  type ProductType @default(QUICK_CUSTOMIZE)
-  products      Product[]
+  id             String         @id @default(cuid())
+  name           String         @unique
+  slug           String         @unique
+  description    String?
+  imageUrl       String?
+  status         CategoryStatus @default(ACTIVE)
+  displayOrder   Int            @default(0)
+  isVisible      Boolean        @default(true)
+  showOnHomepage Boolean        @default(true)
+  isFeatured     Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  serviceTypeId  String?
+  type           ProductType    @default(QUICK_CUSTOMIZE)
+  ServiceType    ServiceType?   @relation(fields: [serviceTypeId], references: [id])
+  products       Product[]
 }
 
 model CustomField {
@@ -70,9 +80,6 @@ model Order {
   subtotal          Decimal       @db.Decimal(10, 2)
   shippingCost      Decimal       @db.Decimal(10, 2)
   totalAmount       Decimal       @db.Decimal(10, 2)
- adminDeletedAt    DateTime?
-adminDeletedById  String?
-customerDeletedAt DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   addressLine1      String?
@@ -85,6 +92,9 @@ customerDeletedAt DateTime?
   razorpayPaymentId String?
   razorpaySignature String?
   state             String?
+  adminDeletedAt    DateTime?
+  adminDeletedById  String?
+  customerDeletedAt DateTime?
   user              User?         @relation(fields: [userId], references: [id])
   items             OrderItem[]
 }
@@ -99,7 +109,7 @@ model OrderItem {
   productImage   String?
   productName    String
   order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product        Product? @relation(fields: [productId], references: [id])
 }
 
 model Cart {
@@ -197,6 +207,33 @@ model ServiceType {
   Category    Category[]
 }
 
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContactInquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model PortfolioItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String
+  imageUrl    String
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -237,36 +274,7 @@ enum ServiceTypeStatus {
   INACTIVE
 }
 
-
-model Setting {
-  id        String   @id @default(cuid())
-  key       String   @unique 
-  value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum ProductType {
   QUICK_CUSTOMIZE
   DESIGN_CONSULTATION
-}
-
-model ContactInquiry {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  message   String
-  createdAt DateTime @default(now())
-}
-
-
-model PortfolioItem {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  category    String
-  imageUrl    String
-  published   Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 }
