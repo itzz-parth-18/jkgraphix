@@ -98,6 +98,7 @@ export default async function ShopPage({ searchParams }: Props) {
   let dbCategories: {
     id: string;
     name: string;
+    slug: string;
   }[] = [];
 
   if (!isMainHubView) {
@@ -111,15 +112,19 @@ export default async function ShopPage({ searchParams }: Props) {
       select: {
         id: true,
         name: true,
+        slug: true,
       },
     });
   }
 
   // Specific category select ki hai
   if (selectedCategory !== "all") {
+    const normalizedCategory = selectedCategory.toLowerCase();
+
     const cat = dbCategories.find(
-      (c: { id: string; name: string }) =>
-        c.name.toLowerCase() === selectedCategory.toLowerCase()
+      (c: { id: string; name: string; slug: string }) =>
+        c.slug.toLowerCase() === normalizedCategory ||
+        c.name.toLowerCase() === normalizedCategory
     );
 
     if (cat) {
@@ -390,14 +395,20 @@ export default async function ShopPage({ searchParams }: Props) {
 
               {/* Dynamic Database Category Boxes */}
               {dbCategories.map(
-                (cat: { id: string; name: string }) => {
+                (cat: { id: string; name: string; slug: string }) => {
+                  const normalizedSelectedCategory =
+                    selectedCategory.toLowerCase();
+
                   const isSelected =
-                    selectedCategory === cat.name.toLowerCase();
+                    normalizedSelectedCategory === cat.slug.toLowerCase() ||
+                    normalizedSelectedCategory === cat.name.toLowerCase();
 
                   return (
                     <Link
                       key={cat.id}
-                      href={`/shop?type=${type}&category=${cat.name.toLowerCase()}`}
+                      href={`/shop?type=${type}&category=${encodeURIComponent(
+                        cat.slug
+                      )}`}
                       className={`shrink-0 snap-start rounded-2xl border px-4 py-2.5 font-medium transition-all duration-300 sm:px-8 sm:py-4 ${
                         isSelected
                           ? "border-[#1F1816] bg-[#1F1816] text-white shadow-md"

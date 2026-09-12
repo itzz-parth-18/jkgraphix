@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ShoppingCart, LogOut, User, Menu } from "lucide-react";
 import { auth, signOut } from "@/lib/auth";
 import CartSync from "@/components/CartSync";
+import HomeLink from "@/components/layout/HomeLink";
 
 export default async function Navbar() {
   const session = await auth();
@@ -27,19 +28,14 @@ export default async function Navbar() {
             priority
           />
 
-          <span className="leading-none">
-            JK Graphix
-          </span>
+          <span className="leading-none">JK Graphix</span>
         </Link>
 
         {/* ================= DESKTOP NAV ================= */}
         <div className="hidden items-center gap-5 md:flex lg:gap-6">
-          <Link
-            href="/"
-            className="text-xs font-semibold text-[#2C2320] transition hover:text-[#C89A84]"
-          >
+          <HomeLink className="text-xs font-semibold text-[#2C2320] transition hover:text-[#C89A84]">
             Home
-          </Link>
+          </HomeLink>
 
           <Link
             href="/shop"
@@ -129,12 +125,9 @@ export default async function Navbar() {
 
             <div className="absolute right-0 top-12 z-50 w-56 overflow-hidden rounded-2xl border border-[#E2DDD9] bg-[#FDFBF7] p-2 shadow-xl">
               <div className="flex flex-col">
-                <Link
-                  href="/"
-                  className="rounded-xl px-4 py-3 text-sm font-semibold text-[#2C2320] transition hover:bg-[#EFE8E2]"
-                >
+                <HomeLink className="rounded-xl px-4 py-3 text-sm font-semibold text-[#2C2320] transition hover:bg-[#EFE8E2]">
                   Home
-                </Link>
+                </HomeLink>
 
                 <Link
                   href="/shop"

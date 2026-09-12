@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { ProductType } from "@prisma/client";
 
 export default async function FeaturedCategories() {
   let categories: {
@@ -7,6 +8,7 @@ export default async function FeaturedCategories() {
     name: string;
     slug: string;
     imageUrl?: string | null;
+    type: ProductType;
   }[] = [];
 
   try {
@@ -22,6 +24,7 @@ export default async function FeaturedCategories() {
         name: true,
         slug: true,
         imageUrl: true,
+        type: true,
       },
     });
   } catch (error) {
@@ -37,18 +40,21 @@ export default async function FeaturedCategories() {
             name: "Memory Boxes",
             slug: "shop",
             imageUrl: null,
+            type: ProductType.QUICK_CUSTOMIZE,
           },
           {
             id: "2",
             name: "Keepsake Jewelry",
             slug: "shop",
             imageUrl: null,
+            type: ProductType.QUICK_CUSTOMIZE,
           },
           {
             id: "3",
             name: "Custom Engravings",
             slug: "shop",
             imageUrl: null,
+            type: ProductType.QUICK_CUSTOMIZE,
           },
         ];
 
@@ -67,7 +73,13 @@ export default async function FeaturedCategories() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
         {displayCategories.map((cat, i) => {
           const categoryName = cat.name;
-          const categoryLink = `/shop?category=${cat.slug || cat.id}`;
+
+          const type =
+            cat.type === ProductType.DESIGN_CONSULTATION ? "cr" : "qc";
+
+          const categoryLink = `/shop?type=${type}&category=${encodeURIComponent(
+            cat.slug || cat.id
+          )}`;
 
           const categoryImage =
             cat.imageUrl ||
